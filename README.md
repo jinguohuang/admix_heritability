@@ -10,3 +10,5 @@ With ASN admixture, 100Mb chromosome
 Delete ASN events, 100Mb chromosome 
 * V3: __anc_estimate_10Mb.sh sim_AA_v3_10Mb.py__
 Seeds {1..22} as different chromosomes, 22 10Mb chromosomes
+* 10demes: __AA_sim_10demes.ipynb__
+Simulate 10 demes with different admixture proportion,works fine with certain random seeds in 10MB, but tends to error if 100MB
