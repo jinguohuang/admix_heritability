@@ -12,3 +12,5 @@ Delete ASN events, 100Mb chromosome
 Seeds {1..22} as different chromosomes, 22 10Mb chromosomes
 * 10demes: __AA_sim_10demes.ipynb__
 Simulate 10 demes with different admixture proportion,works fine with certain random seeds in 10MB, but tends to error if 100MB
+* 10demes/11demes: __AA_sim_10demes_1.ipynb anc_estimate.sh plot_admixture.R__
+Simulate 10 demes with different admixture proportion and different population size. Solved error in last script. 
