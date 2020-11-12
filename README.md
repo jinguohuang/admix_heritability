@@ -21,3 +21,7 @@ Simulate 10 demes with different admixture proportion and different population s
 * Initial test the code __Local_anc_msprime.ipynb__  
   Function credit: https://gist.github.com/rwaples/10336129f75239465279dbfe163bf3c1  
   Test with 11 demes model, 100Mb chromosome, test with AFR,EUR,ADM individuals respectively at 20, 5000 generations
+* Test the code with simpler model __Local_anc_msprime_2.ipynb anc_estimate_2.sh local_to_global.py__
+  Test with 1 admixed deme model, 100Mb chromosome, remove growth rate and migration rate before 16 generations, 200 haplotypes for AFR, EUR, ADM. 
+  Export their genotype and estimate global ancestry with ADMIXTURE; calculate their global ancestry (True) from the local ancestry and compare with the predicted.
+  
