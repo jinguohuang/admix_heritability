@@ -37,6 +37,13 @@ Simulate 10 demes with different admixture proportion and different population s
   Simulate 10 demes model(with pop structure) 10Mb, time of admixture: 16 gen ago, AFR,EUR: 100 hap ADM: 400 hap in total. Average anc: 0.76525. No growth rate,       migration rate before 16 gen. 10 demes follow decile admixture proportion(0.05~0.95). Allow neighboring mig_rate between demes 0.025, 0.05, 0.075, 0.1, 0.15,0.2.  
   Simulate admixed pipulation (without pop structure) 10 MB, with same parameters with 10 demes model except for no migration rate.  
   Export their genotype and estimate global ancestry with ADMIXUTRE. Plot the density plot to compare simulated ancestry distribution with ASW haplotype      distribution. And KS test to see if distribution same. __plot_admixture_dist_density_kstest.R anc_estimate_plot.sh__  
-  
+
+* Debug the better fit simulation model above:__sim_AA_10deme_migrate.py sim_AA_random_mate.py__  
+  -Adjust the migration matrix edge (double the end migration rate only)  
+  -Change to diploid output  
+  -Change to 10Mb x 10. 
+  Run the above script and merge 10 chromosomes, plot and KS test:__anc_estimate_10Mb_migrate.sh anc_estimate_10Mb_random.sh__  
+  Plot script: __plot_admixture_dist_density_kstest_1.R__  
+  ASW AFRICAN ancestry distribution data: __ASW_dip_anc1.txt ASW_ind_anc1.txt__   
   
 
