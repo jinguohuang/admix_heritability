@@ -41,9 +41,14 @@ Simulate 10 demes with different admixture proportion and different population s
 * Debug the better fit simulation model above:__sim_AA_10deme_migrate.py sim_AA_random_mate.py__  
   -Adjust the migration matrix edge (double the end migration rate only)  
   -Change to diploid output  
-  -Change to 10Mb x 10. 
+  -Change to 10Mb x 10.  
+  -Random mate model with equal average admixture proportion with 10 deme model.  
   Run the above script and merge 10 chromosomes, plot and KS test:__anc_estimate_10Mb_migrate.sh anc_estimate_10Mb_random.sh__  
   Plot script: __plot_admixture_dist_density_kstest_1.R__  
   ASW AFRICAN ancestry distribution data: __ASW_dip_anc1.txt ASW_ind_anc1.txt__   
   
 
+* Follow the better fit simulation model above and simulate 10000 haplotypes: __sim_AA_10deme_10000hap.py sim_AA_random_mate_10000hap.py__  
+  Run the above script and merge 10 chromosomes, plot and KS test: __anc_estimate_10Mb_10000hap_migrate.sh anc_estimate_10Mb_random_10000hap.sh__  
+  Plot script: __plot_admixture_dist_density_kstest_2.R__  
+  
