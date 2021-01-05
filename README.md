@@ -30,7 +30,12 @@ Simulate 10 demes with different admixture proportion and different population s
   Test with 10 admixed (decile, 0.05-0.95) deme model, 100Mb chromosome, remove growth rate and migration rate before 16 generations, 200 haplotypes for AFR, EUR,     2000 ADM.  
   Export their genotype and estimate global ancestry with ADMIXTURE.  
   Since it took too long to calculate local anc for all individuals, pick sample (AFR,EUR,AFR), Calculate their global ancestry (True) from the local ancestry for     each and plot their local anc at generation 20 and 2030 (10generations after AFR-EUR split).
-
+* Output local ancestry of 400 hap model below: __local_anc_single.py local_anc_single.sh__  
+  Ouput local ancestry of each person in 400 hap model in dictionary format (.py file).
+  The shell file will submit job to ics with the command like: 
+  ```
+  for i in {501..600}; do qsub -A open -l feature=rhel7 local_anc_single.sh -F $i; done
+  ```
 
 ### Test with different migration rate for better model fit
 * 10 demes model with different migration rate vs random mating model: __mig_rate_random.ipynb AA_10deme_mig_sim.py__  
