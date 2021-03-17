@@ -8,6 +8,7 @@ X\~B(1000,p=freq)
 ϵ\~N(0,var=0.2)
 
 ### Apply the basic model to simulated genotype data to get phenotype data
+code: **sim_pheno_basic.sh**
 1) Simulating genetic data of 10,000ppl under random mating model: 10M for each chromosome, simulate 10 chromosomes. 
 2) QC the genotype with PLINK: --mind 0.1 --geno 0.1 --maf 0.05
 3) Sample 1,000 variants at random such that they are uniformly spaced across the genome with ~ 100Kb between them. We do this for each chromosome separately.  
@@ -16,9 +17,11 @@ X\~B(1000,p=freq)
 6) Simulate environmental value for these variants with a normal distribution (μ=0, var=0.2).  
 7) Normalize the genetic value and add environmental value together to get phenotype data.
 8) Normalize phenotype data. 
+9) Estimate heritability with gcta.
 
 
 ### Apply (Schoech et al. 2019; Zaidi et al. Elife 2020) model to effect sizes 
+code: **sim_pheno_V1.sh**
 1) Simulating genetic data of 10,000ppl under random mating model: 10M for each chromosome, simulate 10 chromosomes. 
 2) QC the genotype with PLINK: --mind 0.1 --geno 0.1 --maf 0.05
 3) Sample 1,000 variants at random such that they are uniformly spaced across the genome with ~ 100Kb between them. We do this for each chromosome separately.  
@@ -27,4 +30,4 @@ X\~B(1000,p=freq)
 6) Simulate environmental value for these variants with a normal distribution (μ=0, var=0.2).  
 7) Normalize the genetic value and add environmental value together to get phenotype data.
 8) Normalize phenotype data. 
-
+9) Estimate heritability with gcta.
