@@ -1,5 +1,9 @@
 #!/bin/env Rscript
 # simulate phenotype data
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(rprojroot)
 gvalue_file="sim_10Kppl_geneticscore_V1.txt"
 prs=fread(gvalue_file)
 colnames(prs)<-c("FID","IID","PHENO","CNT","CNT2","SCORE")
