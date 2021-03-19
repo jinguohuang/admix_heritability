@@ -33,7 +33,7 @@ plink --bfile AA_10Mb_random_10000ppl_chr1_10_AT_maf0.05_1kSNP --score CausalVar
 tail -10000 AA_10Mb_random_10000ppl_chr1_10_AT_maf0.05_1kSNP.profile > sim_10Kppl_geneticscore_V1.txt
 
 # remove 100 non-admixed ppl
-head -100 AA_10Mb_random_10000ppl_chr1_10_AT_maf0.05_extract.fam | awk "{print $1,$2}" > remove_100ppl.txt   
+head -100 AA_10Mb_random_10000ppl_chr1_10_AT_maf0.05_extract.fam | awk '{print $1,$2}' > remove_100ppl.txt  
 plink --bfile AA_10Mb_random_10000ppl_chr1_10_AT_maf0.05_1kSNP --remove remove_100ppl.txt --make-bed --out AA_random_10Kppl_1kSNP
 # 1000 variants and 10000 people pass filters and QC.
 
