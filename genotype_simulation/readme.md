@@ -54,3 +54,23 @@ Simulate 10 demes with different admixture proportion and different population s
   Run the above script and merge 10 chromosomes, plot and KS test: __anc_estimate_10Mb_10000hap_migrate.sh anc_estimate_10Mb_random_10000hap.sh__  
   Plot script: __plot_admixture_dist_density_kstest_2.R__  
   
+### New method to Get local ancestry of simulated individuals with msprime 
+* test with new local ancestry inference method Loc_anc.ipynb
+* loc_anc_10M_20000hap.py 
+* anc_estimate_10Mb_random_20000hap.sh 
+
+### New method to get Local ancestry variance
+* var_local_anc.ipynb
+* anc_estimate_100M_400hap.sh
+* loc_anc_400hap_100M.py loc_anc_400hap_100M_10deme.py 
+* plot_loc_anc_10deme.R plot_loc_anc_random.R
+* reformat_loc_anc_10deme.py reformat_loc_anc_random.py
+
+### Simulate genotype with different admixture proportion
+* sim_anc_prop.py sim_anc_prop.sh
+* anc_estimate_plot_1.sh plot_admixture_dist.R 
+
+
+
+
+
