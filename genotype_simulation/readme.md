@@ -1,5 +1,6 @@
 
-### Simulate admixed population - African American, Cape Verdean
+### Simulate admixed population - African American
+Folder: simulate_AdmPop/
 
 * V1: __sim_AfrAmr_20200824.py__  
 With ASN admixture, 100Mb chromosome 
@@ -15,6 +16,7 @@ Simulate 10 demes with different admixture proportion and different population s
 
 
 ### Get local ancestry of simulated individuals with msprime
+Folder: local_anc_trail1/
 
 * Initial test the code: __Local_anc_msprime.ipynb__    
   Function credit: https://gist.github.com/rwaples/10336129f75239465279dbfe163bf3c1  
@@ -35,6 +37,8 @@ Simulate 10 demes with different admixture proportion and different population s
   ```
 
 ### Test with different migration rate for better model fit
+Folder: mig_rate_model/
+
 * 10 demes model with different migration rate vs random mating model: __mig_rate_random.ipynb AA_10deme_mig_sim.py__  
   Simulate 10 demes model(with pop structure) 10Mb, time of admixture: 16 gen ago, AFR,EUR: 100 hap ADM: 400 hap in total. Average anc: 0.76525. No growth rate,       migration rate before 16 gen. 10 demes follow decile admixture proportion(0.05~0.95). Allow neighboring mig_rate between demes 0.025, 0.05, 0.075, 0.1, 0.15,0.2.  
   Simulate admixed pipulation (without pop structure) 10 MB, with same parameters with 10 demes model except for no migration rate.  
@@ -55,20 +59,21 @@ Simulate 10 demes with different admixture proportion and different population s
   Plot script: __plot_admixture_dist_density_kstest_2.R__  
   
 ### New method to Get local ancestry of simulated individuals with msprime 
+Folder: local_anc_new/
+
 * test with new local ancestry inference method Loc_anc.ipynb
 * loc_anc_10M_20000hap.py 
 * anc_estimate_10Mb_random_20000hap.sh 
 
 ### New method to get Local ancestry variance
+Folder: var_local_anc_new/
+
 * var_local_anc.ipynb
 * anc_estimate_100M_400hap.sh
 * loc_anc_400hap_100M.py loc_anc_400hap_100M_10deme.py 
 * plot_loc_anc_10deme.R plot_loc_anc_random.R
 * reformat_loc_anc_10deme.py reformat_loc_anc_random.py
 
-### Simulate genotype with different admixture proportion
-* sim_anc_prop.py sim_anc_prop.sh
-* anc_estimate_plot_1.sh plot_admixture_dist.R 
 
 
 
