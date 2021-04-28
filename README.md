@@ -1,6 +1,6 @@
 # admix_simulation
 
-This repo is for simulating the trait correlation under ancestry stratification
+This repo is for simulating how admixture affect hertability estimation 
 
 ## Genotype simulation 
 
