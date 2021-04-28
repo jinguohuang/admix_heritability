@@ -31,3 +31,8 @@ code: **sim_pheno_V1.sh**
 7) Normalize the genetic value and add environmental value together to get phenotype data.
 8) Normalize phenotype data. 
 9) Estimate heritability with gcta.
+
+#### Apply (Schoech et al. 2019; Zaidi et al. Elife 2020) model to effect sizes for different ancestry proportion affect heritability
+* CausalVariant_freq_fst.R
+* sim_pheno_V1_ancprop.R
+
