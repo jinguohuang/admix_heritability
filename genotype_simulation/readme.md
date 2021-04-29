@@ -61,18 +61,23 @@ Folder: mig_rate_model/
 ### New method to Get local ancestry of simulated individuals with msprime 
 Folder: local_anc_new/
 
-* test with new local ancestry inference method Loc_anc.ipynb
-* loc_anc_10M_20000hap.py 
-* anc_estimate_10Mb_random_20000hap.sh 
+* Reference code: https://gist.github.com/gtsambos/3165c24aebb50d2ca4b743b25673c413
+* Test with new local ancestry inference method, test with my 400hap, 10,000hap random mating model, and compare the local to global vs ADMIXTURE extimated global ancestry results __Loc_anc.ipynb__  
+* Test with the new method in script __loc_anc_10M_20000hap.py__ to get the local ancestry of 10Mb, 10K admixed people and 50 people per reference population, can finish within an hour.
+* Process the simulated genotype and do ancestry estimation __anc_estimate_10Mb_random_20000hap.sh__ 
 
 ### New method to get Local ancestry variance
 Folder: var_local_anc_new/
 
-* var_local_anc.ipynb
-* anc_estimate_100M_400hap.sh
-* loc_anc_400hap_100M.py loc_anc_400hap_100M_10deme.py 
-* plot_loc_anc_10deme.R plot_loc_anc_random.R
-* reformat_loc_anc_10deme.py reformat_loc_anc_random.py
+* Convert the local ancestry to format: each row as variants, each comlumn as individual (100000000 * 400) and plot for AFR ancestry percentage at each locus, and plot local to global percentage against admixture global for 10deme, random mating 400 hap model: __var_local_anc.ipynb__
+* Simulate 400hap 100MB genotype under random mating and 10 deme model and get local ancestry for each person: __loc_anc_400hap_100M.py__, __loc_anc_400hap_100M_10deme.py__ 
+* Process the simulated genotype and do ancestry estimation with either random or 10deme as input for processing the corresponding one: __anc_estimate_100M_400hap.sh__  
+  Could be used like:
+  ```
+  ./anc_estimate_100M_400hap.sh random
+  ```
+* Convert the local ancestry to format: each row as variants, each comlumn as individual (100000000 * 400), output as a file saving the local ancestry: __reformat_loc_anc_10deme.py__ , __reformat_loc_anc_random.py__
+* Plot the the distribution of AFR ancestry calculated from the output of last step in a Manhattan plot, and calculate the mean and variance of AFR ancestry: __plot_loc_anc_10deme.R__ , __plot_loc_anc_random.R__ 
 
 
 
