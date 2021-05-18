@@ -30,6 +30,16 @@
   ```
   Rscript sim_pheno_V1_ancprop.R ADM_0.2prop_2kCausal.profile
   ```
-  
+
+###  Update code for local ancestry inference with for loop
+* Previous code can't finish for local ancestry inference, it's very likely to caused by large sample size (20k haplotypes). In order to deal with this, I add a for loop that generate local ancestry of 100 haplotypes at an iteration and write their local ancestry to file. This is working for my 20k haplotype simulation, if skip output vcf files to get local ancestry file only, this script will finish within an hour. __sim_anc_prop_locONLY.py  sim_anc_prop_locONLY.sh__  
+  could be submitted to ics and run for admixture proportion 0.1~0.5 and 10 chromosomes for each:
+  ```
+  for i in 0.1 0.2 0.3 0.4 0.5; 
+    do for j in {1..10}; 
+      do qsub -A open sim_anc_prop_locONLY.sh -F "$i $j"; 
+      done; 
+    done
+  ```
 
 
