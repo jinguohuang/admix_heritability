@@ -12,9 +12,9 @@ do
 	echo "extract admixed ppl for chr${chr}"
 	locfile=loc_anc_simAA_1Mb_1Kppl_${model}_chr${chr}.reformat
 	mapfile=loc_anc_simAA_1Mb_1Kppl_${model}_chr${chr}.map
-	cut -d' ' -f401-2400 ${locfile} > ${locfile}_adm-tmp
+	cut -f401-2400 ${locfile} > ${locfile}_adm-tmp
 	echo "calculate AFR anc percentage for each locus"
-	awk -F '0' '{print (NF-1)/2400}' ${locfile}_adm-tmp > ${locfile}_adm_anc0-tmp
+	awk -F '0' '{print (NF-1)/2000}' ${locfile}_adm-tmp > ${locfile}_adm_anc0-tmp
 	echo "add SNP map info to the list"
 	paste -d ' ' ${mapfile} ${locfile}_adm_anc0-tmp | awk -v awkvar=${chr} '{print awkvar"_"$1,awkvar,$1,$2}' > ${locfile}_adm_anc0_annotated-tmp
 	echo "Done for chr${chr}"
