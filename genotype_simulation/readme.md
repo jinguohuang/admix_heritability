@@ -80,6 +80,14 @@ Folder: var_local_anc_new/
 * Plot the the distribution of AFR ancestry calculated from the output of last step in a Manhattan plot, and calculate the mean and variance of AFR ancestry: __plot_loc_anc_10deme.R__ , __plot_loc_anc_random.R__ 
 
 
+### Variance matching and SKT test
+Folder: var_matching_SKTtest/
+* See README.md in folder
+
+### Admixture LD curve: genetic distance vs local ancestry correlation
+Folder: ALD_curve/
+* See README.md in folder
+
 
 
 
