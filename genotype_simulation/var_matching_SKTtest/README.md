@@ -47,7 +47,7 @@ Process of variance calculation of local ancestry and SKT test:
   code: __skt_test_plot_v2.R__  It will plot for both simulated data and ASW.  
   usage:  
   ```
-    Rscript plot_skt_test.R
+    Rscript skt_test_plot_v2.R
   ```
   
   
