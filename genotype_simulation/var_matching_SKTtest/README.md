@@ -37,3 +37,17 @@ Process of variance calculation of local ancestry and SKT test:
 * Proportion matching update for 10deme model with ASW; reformat for local ancestry output of bedtools intersect.  
   code: __var_matching.ipynb__
 
+
+#### Update variance matching and SKT test code
+* Change the number of initial population size of admixed population to 1K in total, so it will be 100 per deme for 10 deme model.  
+  code: __var_match_loc_anc_v2.sh__  
+  Usage is the same as in step 1 above.
+
+* Update the SKT test code, split by odd and even group and then sample with replacement or without replacement.  
+  code: __skt_test_plot_v2.R__  It will plot for both simulated data and ASW.  
+  usage:  
+  ```
+    Rscript skt_test_plot_v2.R
+  ```
+  
+  
