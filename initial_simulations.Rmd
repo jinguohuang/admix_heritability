@@ -17,29 +17,40 @@ library(dplyr)
 
 ```
 
-```{r}
-
-
-```
 
 Simulate genotypes for the two parental populations. We will simulate genotypes for 1000 diploid individuals at 200 loci, each of which has a frequency of 0.8 and 0.3 in pop1 and 2, respectively. 
 
 Set up the parameters.
 ```{r}
 
-f1 = 0.8 #frequency in pop1
-f2 = 0.3 # frequency in pop2
-fbar = (f1 + f2)/2
+fbar = 0.5 # frequency in the parental population
 theta = 0.5 #admixture fraction
-nloci = 200 #number of loci
-vg = 0.8 #desired total genetic variance
+nloci = 1e3 #number of loci
+
+vgt = 1 #desired total genetic variance
+  
+#desired genetic variance in between
+vgb = 0.3
+
+#vgb = vgt*Fst
+fst = vgb/vgt
+
+#next, calculate frequency difference required to generate that Fst
+#fst = (f1 - f2)^2 / 4*pbar*(1-pbar)
+fdiff = sqrt(fst*4*fbar*(1-fbar))
+
+#solve system of linear equation
+f1_f2 = solve(a = matrix(c(0.5, 1, 0.5, -1), nrow = 2, ncol = 2), 
+              b= c(fbar, fdiff))
+f1 = f1_f2[1]
+f2 = f1_f2[2]
 
 ```
 
 ```{r}
 
 #simulate genotypes for pop1 (200 loci and 1000 individuals)
-geno1 = replicate(nloci, rbinom(1000, 2, f1))
+geno1 = replicate(nloci, rbinom(200, 2, f1))
 
 #simulate genotypes for pop2
 geno2 = replicate(nloci, rbinom(1000, 2, f2))
@@ -49,11 +60,17 @@ geno2 = replicate(nloci, rbinom(1000, 2, f2))
 Sample effect sizes for the 200 loci such that the genetic variance in the total population is 0.8. This is not super important but good to understand.
 
 ```{r}
+#proportion of loci that are causal
+pcausal = 0.2
+ncausal = round(pcausal*nloci)
 
-#choose effect sizes for 200 loci
+#choose effect sizes for causal loci
 bg = matrix(
-  rnorm(nloci, 0, sd= sqrt(vg/(nloci*2*fbar*( 1 - fbar)))), 
-  nrow = nloci, ncol = 1)
+  rnorm(ncausal, 0, sd= sqrt(vgt/(ncausal*2*fbar*(1-fbar)))), 
+  nrow = ncausal, ncol = 1)
+
+#add 0s for non-causal loci
+bg = sample(c(bg, rep(0, nloci - ncausal)))
 
 ```
 
@@ -65,6 +82,7 @@ Calculate genetic variance between populations
 pbar = (f1 + f2)/2
 vtotal = sum(2 * bg^2 * fbar * (1 - fbar))
 vwithin = sum(2*(bg^2)*f1*(1 - f1) + 2*(bg^2)*f2*(1 - f2))/2
+#vb2 = sum(bg^2 * (f2-f1)^2)/2
 vbetween = vtotal - vwithin
 
 ```
@@ -77,7 +95,7 @@ Local ancestry at any single locus is assmued to be Binomial with N = 2 and mean
 
 #simulate local ancestry in admixed population
 #admixture fraction: 0.5
-lanc = replicate(nloci, rbinom(10000, 2, fbar))
+lanc = replicate(nloci, rbinom(200, 2, theta))
 
 ```
 
