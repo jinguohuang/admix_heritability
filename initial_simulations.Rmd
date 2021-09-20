@@ -1,91 +1,63 @@
 ---
-title: "genetic variance due to local ancestry"
-author: "Arslan Zaidi"
-date: "8/23/2021"
+title: "simple_simulation_vtotal1"
+author: "Jinguo Huang"
+date: "9/16/2021"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
+Change the simple_simulation to make Vtotal=1
 ```{r}
-
-library(data.table)
-library(ggplot2)
-library(dplyr)
-
-```
-
-
-Simulate genotypes for the two parental populations. We will simulate genotypes for 1000 diploid individuals at 200 loci, each of which has a frequency of 0.8 and 0.3 in pop1 and 2, respectively. 
-
-Set up the parameters.
-```{r}
-
 fbar = 0.5 # frequency in the parental population
-theta = 0.5 #admixture fraction
-nloci = 1e3 #number of loci
-
+theta = 0.4 #admixture fraction
+nloci = 1000 #number of loci, not necessary causal variants
 vgt = 1 #desired total genetic variance
-  
-#desired genetic variance in between
-vgb = 0.3
-
+vgb = 0.3 #desired genetic variance in between
 #vgb = vgt*Fst
 fst = vgb/vgt
-
 #next, calculate frequency difference required to generate that Fst
 #fst = (f1 - f2)^2 / 4*pbar*(1-pbar)
 fdiff = sqrt(fst*4*fbar*(1-fbar))
-
 #solve system of linear equation
 f1_f2 = solve(a = matrix(c(0.5, 1, 0.5, -1), nrow = 2, ncol = 2), 
-              b= c(fbar, fdiff))
+              b = c(fbar, fdiff))
+# 0.5*f1+0.5*f2=fbar
+# f1-f2=fdiff
+# given fbar and fdiff, solve the linear equation to get f1,f2
 f1 = f1_f2[1]
 f2 = f1_f2[2]
-
 ```
 
+Simulate genotype and lanc for given f1,f2
 ```{r}
-
-#simulate genotypes for pop1 (200 loci and 1000 individuals)
-geno1 = replicate(nloci, rbinom(200, 2, f1))
-
+#simulate genotypes for pop1 (200 loci and 1000 individuals), including non-causal variants
+geno1 = replicate(nloci, rbinom(1000, 2, f1))
 #simulate genotypes for pop2
 geno2 = replicate(nloci, rbinom(1000, 2, f2))
 
 ```
 
-Sample effect sizes for the 200 loci such that the genetic variance in the total population is 0.8. This is not super important but good to understand.
+Sample effect sizes for the 200 loci such that the genetic variance in the total population is 1.
 
 ```{r}
 #proportion of loci that are causal
-pcausal = 0.2
-ncausal = round(pcausal*nloci)
-
-#choose effect sizes for causal loci
+pcausal = 0.2 #1000 loci, 200 causal variants
+ncausal = round(pcausal*nloci) # get number of causal variants
+#choose effect sizes for causal loci, such that the total population variance is 1
 bg = matrix(
   rnorm(ncausal, 0, sd= sqrt(vgt/(ncausal*2*fbar*(1-fbar)))), 
   nrow = ncausal, ncol = 1)
-
 #add 0s for non-causal loci
 bg = sample(c(bg, rep(0, nloci - ncausal)))
-
 ```
 
-Calculate genetic variance between populations
 
 ```{r}
-
 #calculate variance between populations
 pbar = (f1 + f2)/2
-vtotal = sum(2 * bg^2 * fbar * (1 - fbar))
+vtotal = sum(2 * bg^2 * pbar * (1 - pbar))
 vwithin = sum(2*(bg^2)*f1*(1 - f1) + 2*(bg^2)*f2*(1 - f2))/2
-#vb2 = sum(bg^2 * (f2-f1)^2)/2
 vbetween = vtotal - vwithin
-
 ```
+
 
 Simulate local ancestry and genotypes for admixed population such that the admixture fraction is 0.5.
 
@@ -95,8 +67,8 @@ Local ancestry at any single locus is assmued to be Binomial with N = 2 and mean
 
 #simulate local ancestry in admixed population
 #admixture fraction: 0.5
-lanc = replicate(nloci, rbinom(200, 2, theta))
-
+lanc = replicate(nloci, rbinom(10000, 2, theta))
+mean(lanc[1,])
 ```
 
 Now simulate genotypes at each locus given the ancestry at that locus. If the ancestry of an allele is from pop1, the probability that it is (say the 'A') allele is 0.8. The probability of it being the same allele if the ancestry is from pop2 is 0.3.
@@ -110,7 +82,7 @@ geno.admix = structure(sapply(lanc, function(x){
   }
   if(x == 1){
     g1 = rbinom(1, 1, f1)
-    g2 = rbinom(1, 1, f1)
+    g2 = rbinom(1, 1, f2)
   }
   if(x == 2){
     g1 = rbinom(1, 1, f2)
@@ -124,15 +96,14 @@ geno.admix = structure(sapply(lanc, function(x){
 Simulate genetic values in the admixed population.
 
 ```{r}
-
 #generate genetic value in admixed population
 gvalue.admix = t(t(bg)%*%t(geno.admix))
-
 ```
 
-
+Using linear model to estimate the effect size from simulated gvalue. 
+Validate if the estimated effect size match the simulated effect size, and Validate if the estimated effect size of local ancestry match the converted simulated effect size 
+ 
 ```{r}
-
 #estimate effect size for genotypes and local ancestry
 est.b.g = matrix(NA, nrow = nloci, ncol = 1)
 est.b.l = matrix(NA, nrow = nloci, ncol = 1)
@@ -152,52 +123,113 @@ for(i in 1:nloci){
 Expected effect size of local ancestry (based on analytical derivation). Then, plot the expected vs estimated effect size of local ancestry.
 
 ```{r}
-
-bl = bg * (f2 - f1) 
-
+bl = bg * (f2 - f1)#
 #estimated and expected effect size of genotype
 plot(bg, est.b.g)
-
 #estimate and expected effect size of ancestry
 plot(bl, est.b.l)
+```
+The estimated effect size of ancestry is slightly noisier. Will have to work out later what the power of this association test is.
 
+
+#plot for admixture varies under vgb=0.3
+```{r}
+
+library(data.table)
+simVSest<-fread("simVSest_vgb0.3.txt")
+library(ggplot2)
+
+# calculate the upper and lower for errorbar 95% confidence interval
+simVSest$`V(G).lower`=simVSest$`V(G).Variance`-1.96*simVSest$`V(G).SE`
+simVSest$`V(G).upper`=simVSest$`V(G).Variance`+1.96*simVSest$`V(G).SE`
+simVSest$`V(e).lower`=simVSest$`V(e).Variance`-1.96*simVSest$`V(e).SE`
+simVSest$`V(e).upper`=simVSest$`V(e).Variance`+1.96*simVSest$`V(e).SE`
+#simVSest$`Vp.lower`=simVSest$`Vp.Variance`-1.96*simVSest$`Vp.SE`
+#simVSest$`Vp.upper`=simVSest$`Vp.Variance`+1.96*simVSest$`Vp.SE`
+
+# adjust the expected value
+simVSest$esp.Vbetween = simVSest$vbetween * 4 * simVSest$admixture * (1 - simVSest$admixture)
+
+#Vg
+png(file=paste0("simVSest_vgb0.3_admix.png"), width=6, height=6, units="in", res=300)
+ggplot(simVSest, aes(x=esp.Vbetween, y=`V(G).Variance`)) +
+  geom_errorbar(width=.005,aes(ymin = `V(G).lower`, ymax = `V(G).upper`)) +
+  geom_point(shape=21, size=3, fill="white") +
+  ggtitle("Expected VS Estimated Between Population Genetic Variance \nAdmixture proportion 0.1~ 0.5 Vgb = 0.3 (CI=95%)" ) +
+  geom_abline(slope=1, size = .5, color = "red") +
+  ylim(0, 0.4) + xlim(0, 0.4)
+dev.off()
+
+#Ve
+png(file=paste0("simVSest_ve_admix.png"), width=6, height=6, units="in", res=300)
+ggplot(simVSest, aes(x=admixture, y=`V(e).Variance`)) +
+  geom_errorbar(width=.005,aes(ymin = `V(e).lower`, ymax = `V(e).upper`)) +
+  geom_point(shape=21, size=3, fill="white") +
+  ggtitle("Expected VS Estimated Within Population Genetic Variance \nUnder different Admixture Proportion Vgb = 0.3 (CI=95%)" ) +
+  geom_abline(slope=0, intercept = 0.766078, size = .5, color = "red") + 
+  ylim(0,1)
+
+dev.off()
 ```
 
-The correlations look great! The estimated effect size of ancestry is slightly noisier. Will have to work out later what the power of this association test is.
+
+# plot for adjusted estimated vg vs the expected under different admixture value
+```{r}
+library(data.table)
+filename<-"simVSest_vgb0.3.txt"
+simVSest<-fread(filename)
+library(ggplot2)
+
+# calculate the upper and lower for errorbar 95% confidence interval
+simVSest$adjustVG = simVSest$`V(G)/Vp.Variance` /( 4 * simVSest$admixture * (1 - simVSest$admixture))
+#Adjust SE or not?
+simVSest$VG.SE=1.96*simVSest$`V(G).SE`/( 4 * simVSest$admixture * (1 - simVSest$admixture))
+#simVSest$VG.SE=1.96*simVSest$`V(G).SE`
+
+simVSest$adjustVG.lower=simVSest$adjustVG-simVSest$VG.SE 
+simVSest$adjustVG.upper=simVSest$adjustVG+simVSest$VG.SE
+#png(file=paste0("simVSest_vgb0.3_admix.png"), width=6, height=6, units="in", res=300)
+ggplot(simVSest, aes(x=admixture, y=adjustVG)) +
+  geom_errorbar(width=.005,aes(ymin = adjustVG.lower, ymax = adjustVG.upper)) +
+  geom_point(shape=21, size=3, fill="white") +
+  ggtitle("Expected VS Estimated Between Population Genetic Variance \nUnder different Admixture Proportion Vgb = 0.3 (CI=95%)" ) + 
+  xlab("Admixture Proportion") + ylab("Estimated Genetic Variance (Adjusted)") +
+  #geom_abline(slope=0, intercept = vbetween, size = .5, color = "red") + 
+  geom_point(aes(x=admixture, y=vbetween), colour="red") +
+  ylim(0,1) + theme_bw()
+#dev.off()
+```
+
+
 
 Now, calculate the expected and estimated (using effect sizes not GRM) values of genetic variance due to local ancestry. 
 
+
 ```{r}
-
 #calculate expected genetic variance due to local ancestry
+library(data.table)
 #approach 1: using true genotype effect sizes
-exp.vg.ancestry1 = 2*0.5*(1 - 0.5)*sum(bg^2  * (0.8 - 0.3)^2)
-
+exp.vg.ancestry1 = 2*theta*(1 - theta)*sum(bg^2  * (f1 - f2)^2)
 #approach 2: using true local ancestry effect sizes
-exp.vg.ancestry2 = 2*0.5*(1 - 0.5)*sum(bl^2)
-
+exp.vg.ancestry2 = 2*theta*(1 - theta)*sum(bl^2)
 #calculate observed genetic variance due to local ancestry
 #approach 1: generate genetic values using estimated effect sizes and calculate variance in genetic values
 gvalues.est.lanc = t(t(est.b.l) %*% t(lanc))
 obs.vg.ancestry1 = var(gvalues.est.lanc)
-
 #approach 2: square the effect sizes of ancestry and so on.
 obs.vg.ancestry2 = sum(est.b.l^2 * 
       2*(apply(lanc, 2, mean)/2) * 
       ( 1- apply(lanc, 2, mean)/2))
-
 data.table(expected = c(exp.vg.ancestry1, exp.vg.ancestry2), 
            observed = c(obs.vg.ancestry1, obs.vg.ancestry2))
-
 ```
 
 The expected values are exactly equal to the genetic variance between populations (vbetween). The observed values are slightly higher, probably because the effect sizes are error prone. Let's see if this is just sampling error or if there's some bias in estimation. To do so, we will need to repeat the phenotype and gwas simulation a number of times. 
 
 ```{r}
-
 sim.vg_lanc = function(){
   bg = matrix(
-    rnorm(nloci, 0, sd= sqrt(vg/(nloci*2*fbar*( 1 - fbar)))), 
+    rnorm(nloci, 0, sd= sqrt(vgt/(nloci*2*fbar*( 1 - fbar)))), 
     nrow = nloci, ncol = 1)
   
   #generate genetic value in admixed population
@@ -229,17 +261,13 @@ sim.vg_lanc = function(){
   return(obs.vg.ancestry2)
   
 }
-
 vg_lanc = replicate(100, sim.vg_lanc())
-
-
+mean(vg_lanc)
 ```
 
 
 ```{r}
-
 kmat.l  = lanc %*% t(lanc)
-
 varcomp = function(sg, se){
   ninds = nrow(kmat.l)
   
@@ -247,7 +275,6 @@ varcomp = function(sg, se){
   logL = -0.5*2*log(2*pi) + 0.5*log(det(S)) - 0.5 * t(gvalue.admix) %*% inv(S) %*% gvalue.admix
   return(logL)
 }
-
 ```
 
 
