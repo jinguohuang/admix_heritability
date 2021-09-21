@@ -181,7 +181,7 @@ simVSest<-fread(filename)
 library(ggplot2)
 
 # calculate the upper and lower for errorbar 95% confidence interval
-simVSest$adjustVG = simVSest$`V(G)/Vp.Variance` /( 4 * simVSest$admixture * (1 - simVSest$admixture))
+simVSest$adjustVG = simVSest$`V(G).Variance` /( 4 * simVSest$admixture * (1 - simVSest$admixture))
 #Adjust SE or not?
 simVSest$VG.SE=1.96*simVSest$`V(G).SE`/( 4 * simVSest$admixture * (1 - simVSest$admixture))
 #simVSest$VG.SE=1.96*simVSest$`V(G).SE`
