@@ -71,24 +71,8 @@ Local ancestry at any single locus is assmued to be Binomial with N = 2 and mean
 ```{r}
 
 #simulate local ancestry in admixed population
-#admixture fraction: 0.9
-lanc1 = replicate(nloci, rbinom(1e4, 2, 0.9))
-lanc2 = replicate(nloci, rbinom(1e4, 2, 0.9))
-
-theta =0.9 # mean admixture fraction
-#add some noise to the mean ancestry at each locus due to drift
-fst = 10/(2*1e4) # drift since admixture
-floci = rbeta(nloci, 0.9*(1- fst)/fst, (1-0.9)*(1-fst)/fst) # mean ancestry fraction at each locus
-
-cormat = matrix(NA, nrow = 100, ncol = 1)
-for(i in 1:100){
-  lanc1 = replicate(nloci, rbinom(1e3, 2, 0.9))
-  lanc2 = replicate(nloci, rbinom(1e3, 2, 0.9))
-  glanc1 = apply(lanc1, 1, mean)/2
-  glanc2 = apply(lanc2, 1, mean)/2
-  cormat[i,1] = cor(glanc1, glanc2)
-}
-
+#admixture fraction: theta
+lanc = replicate(nloci, rbinom(1e4, 2, theta))
 
 ```
 
