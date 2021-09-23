@@ -184,6 +184,40 @@ obs.vg.ancestry2 = sum(est.b.l^2 *
 data.table(expected = c(exp.vg.ancestry1, exp.vg.ancestry2), 
            observed = c(obs.vg.ancestry1, obs.vg.ancestry2))
 ```
+```{r}
+# convert admix lanc to tped 
+# change lanc to certain allele
+lanc<-as.data.table(lanc)
+lanc[lanc == 0] <- "A,A"
+lanc[lanc == 1] <- "A,T"
+lanc[lanc == 2] <- "T,T"
+# split them into 2 rows separately
+lanc.allele<-data.frame(lapply(lanc, function(x) unlist(strsplit(as.character(x), ","))))
+
+# transpose it and add map info: chrom, ID, cm (0), position
+lanc.t<-t(lanc.allele)
+map<-data.frame(chrom ="1",  cm=0, pos=1:nloci)
+map$ID <- paste0(map$chrom, "_", map$pos, "_AT")
+
+# reorder
+map<-map[,c(1,4,2,3)]
+
+# bind map and lanc together
+l=cbind(map, lanc.t)
+
+# output as tped file
+write.table(l, file = paste0("admix", filename, ".tped"), quote=FALSE, sep = '\t' ,
+            row.names = FALSE, col.names = FALSE)
+
+# make tfam file
+fam<-data.frame(FID="ADM",IID=1:10000,FID=0,MID=0,SEX=0,Pheno=-9 )
+write.table(fam, file = paste0("admix", filename, ".tfam"), quote=FALSE, sep = '\t' ,
+            row.names = FALSE, col.names = FALSE)
+```
+
+
+
+
 Convert genotype data to tped for gcta estimate. (espected h2=0.8)
 ```{r}
 # change geno to certain allele
