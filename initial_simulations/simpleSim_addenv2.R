@@ -20,10 +20,9 @@ option_list = list(
   make_option(c("--theta", "-t"), type="numeric", default=0.5, 
               help="admixture proportion [default= %default]", metavar="character"),
   make_option(c("--venv", "-e"), type = "numeric", default = 0, 
-                help = "desired environmental variance [default = %default]"),
-  make_option(c("--nloci", "-l"), type = "numeric", default = 200, help = "number of loci  [default = %default]"),
-  make_option(c("--seed"), type="numeric", default=120, 
-              help="random seed [default= %default]", metavar="character")
+              help = "desired environmental variance [default = %default]")
+  #make_option(c("--seed"), type="numeric", default=120, 
+  #help="random seed [default= %default]", metavar="character")
 )
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -32,7 +31,7 @@ print("setting up")
 
 #Set up the parameters.
 fbar = 0.5 # total frequency in the parental population
-nloci = opt$nloci #number of loci, not necessary causal variants
+nloci = 1000 #number of loci, not necessary causal variants
 vgt = 1 #desired total genetic variance
 
 theta = opt$theta #admixture fraction
@@ -113,11 +112,11 @@ gvalue.admix = t(t(bg)%*%t(geno.admix))
 sample_size=length(gvalue.admix)
 # add environment noise to gvalue to create the pheno data
 # in order to get vg/(vg+ve) = 0.8, simulate ve with var=0.25
-venv=opt$venv
+venv=args$venv
 phenotype = as.data.table(gvalue.admix)
 colnames(phenotype)=c("gvalue")
 phenotype$environment = rnorm(n = sample_size, mean = 0,
-                        sd = sqrt(venv))
+                              sd = sqrt(venv))
 # normalize gvalue
 phenotype$gvalue_norm = (phenotype$gvalue - mean(phenotype$gvalue))/sd(phenotype$gvalue)
 
@@ -158,7 +157,7 @@ sink()
 # 
 # lanc<-as.matrix(lanc)
 # geno.admix<-as.matrix(geno.admix)
-
+# 
 # for(i in 1:nloci){
 #   l1 = lm(gvalue.admix ~ geno.admix[,i])
 #   s1 = summary(l1)$coefficients
@@ -188,37 +187,30 @@ sink()
 #      xlab="Expected Effect Size", ylab="Estimated Effect Size")
 # dev.off()
 
-print("writing to genotype file")
+
 # convert admix lanc to tped 
 # change lanc to certain allele
-#lanc<-as.data.table(lanc)
-# lanc[lanc == 0] <- "A,A"
-# lanc[lanc == 1] <- "A,T"
-# lanc[lanc == 2] <- "T,T"
+lanc<-as.data.table(lanc)
+lanc[lanc == 0] <- "A,A"
+lanc[lanc == 1] <- "A,T"
+lanc[lanc == 2] <- "T,T"
 # split them into 2 rows separately
-#lanc.allele<-sapply(lanc, function(x) unlist(strsplit(as.character(x), ",")))
-# lanc.allele<-data.frame(lapply(lanc, function(x) unlist(strsplit(as.character(x), ","))))
+lanc.allele<-data.frame(lapply(lanc, function(x) unlist(strsplit(as.character(x), ","))))
 
 # transpose it and add map info: chrom, ID, cm (0), position
-lanc.t<-t(lanc)
-# map<-data.frame(chrom ="1",  cm=0, pos=1:nloci)
-# map$ID <- paste0(map$chrom, "_", map$pos, "_AT")
+lanc.t<-t(lanc.allele)
+map<-data.frame(chrom ="1",  cm=0, pos=1:nloci)
+map$ID <- paste0(map$chrom, "_", map$pos, "_AT")
 
 # reorder
-# map<-map[,c(1,4,2,3)]
-
-map = data.table(SNP = paste0(1, "_", 1:nloci, "_AG"), A1 = "A", A2 = "G")
-lanc.t = cbind(map, lanc.t)
-write.table(lanc.t, file = paste0("admix", filename, ".dosage"), quote=FALSE, sep = '\t' ,
-            row.names = FALSE, col.names = FALSE)
-
+map<-map[,c(1,4,2,3)]
 
 # bind map and lanc together
-# l=cbind(map, lanc.t)
-# 
-# # output as tped file
-# write.table(l, file = paste0("admix", filename, ".tped"), quote=FALSE, sep = '\t' ,
-#             row.names = FALSE, col.names = FALSE)
+l=cbind(map, lanc.t)
+
+# output as tped file
+write.table(l, file = paste0("admix", filename, ".tped"), quote=FALSE, sep = '\t' ,
+            row.names = FALSE, col.names = FALSE)
 
 # make tfam file
 fam<-data.frame(FID="ADM",IID=1:10000,FID=0,MID=0,SEX=0,Pheno=-9 )
@@ -227,40 +219,36 @@ write.table(fam, file = paste0("admix", filename, ".tfam"), quote=FALSE, sep = '
 
 
 #convert genotype data to tped for gcta estimate. (espected h2=0.8)
-# 
-# # change geno to certain allele
-# geno.admix<-as.data.table(geno.admix)
-# geno.admix[geno.admix == 0] <- "A,A"
-# geno.admix[geno.admix == 1] <- "A,T"
-# geno.admix[geno.admix == 2] <- "T,T"
-# # split them into 2 rows separately
-# geno.allele<-data.frame(lapply(geno.admix, function(x) unlist(strsplit(as.character(x), ","))))
-# 
-# # transpose it and add map info: chrom, ID, cm (0), position
-# geno.t<-t(geno.allele)
-# map<-data.frame(chrom ="1",  cm=0, pos=1:nloci)
-# map$ID <- paste0(map$chrom, "_", map$pos, "_AT")
-# 
-# # reorder
-# map<-map[,c(1,4,2,3)]
-# 
-# # bind map and lanc together
-# l=cbind(map, geno.t)
-# 
-# # output as tped file
-# write.table(l, file = paste0("admix_geno", filename, ".tped"), quote=FALSE, sep = '\t' ,
-#             row.names = FALSE, col.names = FALSE)
-# 
-# # make tfam file
-# fam<-data.frame(FID="ADM",IID=1:10000,FID=0,MID=0,SEX=0,Pheno=-9 )
-# write.table(fam, file = paste0("admix_geno", filename, ".tfam"), quote=FALSE, sep = '\t' ,
-#             row.names = FALSE, col.names = FALSE)
-# 
-# 
-# 
-# 
-# 
 
-phenotype = cbind(fam[,c(1,2)], phenotype[,c(3,4)])
-fwrite(phenotype, file = paste0("admix", filename, ".pheno"), quote=FALSE, sep = '\t' ,
-                   row.names = FALSE, col.names = FALSE)
+# change geno to certain allele
+geno.admix<-as.data.table(geno.admix)
+geno.admix[geno.admix == 0] <- "A,A"
+geno.admix[geno.admix == 1] <- "A,T"
+geno.admix[geno.admix == 2] <- "T,T"
+# split them into 2 rows separately
+geno.allele<-data.frame(lapply(geno.admix, function(x) unlist(strsplit(as.character(x), ","))))
+
+# transpose it and add map info: chrom, ID, cm (0), position
+geno.t<-t(geno.allele)
+map<-data.frame(chrom ="1",  cm=0, pos=1:nloci)
+map$ID <- paste0(map$chrom, "_", map$pos, "_AT")
+
+# reorder
+map<-map[,c(1,4,2,3)]
+
+# bind map and lanc together
+l=cbind(map, geno.t)
+
+# output as tped file
+write.table(l, file = paste0("admix_geno", filename, ".tped"), quote=FALSE, sep = '\t' ,
+            row.names = FALSE, col.names = FALSE)
+
+# make tfam file
+fam<-data.frame(FID="ADM",IID=1:10000,FID=0,MID=0,SEX=0,Pheno=-9 )
+write.table(fam, file = paste0("admix_geno", filename, ".tfam"), quote=FALSE, sep = '\t' ,
+            row.names = FALSE, col.names = FALSE)
+
+
+
+
+

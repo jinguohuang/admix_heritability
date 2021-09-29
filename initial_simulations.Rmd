@@ -1,16 +1,19 @@
 ---
 title: "simple_simulation_vtotal1"
-author: "Jinguo Huang"
+author: "Arslan Zaidi and Jinguo Huang"
 date: "9/16/2021"
 output: html_document
 ---
+
 Change the simple_simulation to make Vtotal=1
+
 ```{r}
 fbar = 0.5 # frequency in the parental population
-theta = 0.4 #admixture fraction
-nloci = 1000 #number of loci, not necessary causal variants
-vgt = 1 #desired total genetic variance
-vgb = 0.3 #desired genetic variance in between
+theta = 0.1 #admixture fraction
+nloci = 200 #number of loci, not necessary causal variants
+h2 = 0.8 # heritability
+vgt = 1*h2 #desired total genetic variance
+vgb = 0.5 #desired between-pop genetic variance as fraction of Vtotal
 #vgb = vgt*Fst
 fst = vgb/vgt
 #next, calculate frequency difference required to generate that Fst
@@ -39,7 +42,7 @@ Sample effect sizes for the 200 loci such that the genetic variance in the total
 
 ```{r}
 #proportion of loci that are causal
-pcausal = 0.2 #1000 loci, 200 causal variants
+pcausal = 1 #1000 loci, 200 causal variants
 ncausal = round(pcausal*nloci) # get number of causal variants
 #choose effect sizes for causal loci, such that the total population variance is 1
 bg = matrix(
@@ -103,12 +106,16 @@ Simulate genetic values in the admixed population.
 ```{r}
 #generate genetic value in admixed population
 gvalue.admix = t(t(bg)%*%t(geno.admix))
+
+pheno.admix = gvalue.admix + rnorm(length(gvalue.admix), 0, sd = sqrt(1 - h2)) 
+  
 ```
 
 Using linear model to estimate the effect size from simulated gvalue.
 Validate if the estimated effect size match the simulated effect size, and Validate if the estimated effect size of local ancestry match the converted simulated effect size
 
 ```{r}
+
 #estimate effect size for genotypes and local ancestry
 est.b.g = matrix(NA, nrow = nloci, ncol = 1)
 est.b.l = matrix(NA, nrow = nloci, ncol = 1)
@@ -123,6 +130,21 @@ for(i in 1:nloci){
   est.b.l[i,1] = s2[2,1]
 }
 
+#estimate effect size for genotypes and local ancestry
+est.b.g2 = matrix(NA, nrow = nloci, ncol = 1)
+est.b.l2 = matrix(NA, nrow = nloci, ncol = 1)
+
+for(i in 1:nloci){
+  l1 = lm(pheno.admix ~ geno.admix[,i])
+  s1 = summary(l1)$coefficients
+  est.b.g2[i,1] = s1[2,1]
+
+  l2 = lm(pheno.admix ~ lanc[,i])
+  s2 = summary(l2)$coefficients
+  est.b.l2[i,1] = s2[2,1]
+}
+
+
 ```
 
 Expected effect size of local ancestry (based on analytical derivation). Then, plot the expected vs estimated effect size of local ancestry.
@@ -134,7 +156,53 @@ plot(bg, est.b.g)
 #estimate and expected effect size of ancestry
 plot(bl, est.b.l)
 ```
+
+```{r}
+
+#estimated and expected effect size of genotype
+plot(est.b.g, est.b.g2)
+abline(a = 0, b = 1)
+
+#estimate and expected effect size of ancestry
+plot(est.b.l, est.b.l2)
+abline(a = 0, b = 1)
+
+```
+
 The estimated effect size of ancestry is slightly noisier. Will have to work out later what the power of this association test is.
+
+
+```{r}
+
+fit.b.g = fitted(lm(est.b.g ~ bg))
+fit.b.l = fitted(lm(est.b.l ~ bl))
+
+#genetic variance
+sum(bg^2 * 2*pbar*(1 - pbar))
+sum(fit.b.g^2 * 2*pbar*(1 - pbar))
+
+#local ancestry variance
+sum(bg^2 * (f1 - f2)^2 * 2*theta*(1-theta))
+sum(fit.b.g^2 * (f1 - f2)^2 * 2*theta*(1-theta))
+sum(fit.b.l^2 * 2*theta*(1 - theta))
+
+```
+
+```{r}
+
+fit.b.g2 = fitted(lm(est.b.g2 ~ bg))
+fit.b.l2 = fitted(lm(est.b.l2 ~ bl))
+
+#genetic variance
+sum(bg^2 * 2*pbar*(1 - pbar))
+sum(fit.b.g2^2 * 2*pbar*(1 - pbar))
+
+#local ancestry variance
+sum(bg^2 * (f1 - f2)^2 * 2*theta*(1-theta))
+sum(fit.b.g2^2 * (f1 - f2)^2 * 2*theta*(1-theta))
+sum(fit.b.l2^2 * 2*theta*(1 - theta))
+
+```
 
 
 #plot for admixture varies under vgb=0.3
