@@ -5,14 +5,17 @@ args = commandArgs(trailingOnly=TRUE)
 library(data.table)
 theta=args[1]
 vgb=args[2]
+vgt=args[3]
+venv=args[4]
 
-simfile<-paste0("sim_prop",theta, "_vgb",vgb,"_expected.txt")
-estfile<-paste0("admix_prop",theta, "_vgb",vgb, ".hsq")
-genofile<-paste0("admix_geno_prop",theta, "_vgb",vgb, ".hsq")
-  
+filename <- paste0("_prop", theta, "_vgb", vgb, "_vgt", vgt, "_venv", venv) 
+
+simfile<-paste0("sim", filename ,"_expected.txt")
+estfile<-paste0("admix",filename, ".reml.hsq")
+
+
 sim<-fread(simfile)
 est<-fread(estfile, fill=TRUE)
-geno<-fread(genofile, fill=TRUE)
 # function to reformat hsq file
 reformat <- function(x){
   x<-x[complete.cases(x), ] # delete NA
@@ -21,14 +24,11 @@ reformat <- function(x){
   x<-x[c("Source", "value")]
 }
 # reformat
-geno<-reformat(geno)
 est<-reformat(est)
-#add extra for geno
-geno$Source=paste0(geno$Source, ".geno")
 # bind all together
 colnames(sim)<-c("Source", "value")
-est_sim<-rbind(sim, est, geno)
+est_sim<-rbind(est, sim)
 est_sim_t<-t(est_sim)
 # output the reformat info
-write.table(est_sim_t, file = paste0("simVSest_prop",theta, "_vgb",vgb,".txt"), 
+write.table(est_sim_t, file = paste0("simVSest", filename, ".txt"), 
             quote = F, col.names = F, row.names = F)
