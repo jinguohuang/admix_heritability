@@ -10,14 +10,14 @@ library(ggplot2)
 library(dplyr)
 library(optparse)
 option_list = list(
-  make_option(c("--vgb", "-b"), type="numeric", default=0.3, 
-              help="simulated genetic variance between parental groups[default= %default]", metavar="character"),
-  make_option(c("--vgt", "-g"), type="numeric", default=1, 
-              help="simulated total genetic variance[default= %default]", metavar="character"),
+  make_option(c("--fstc", "-F"), type="numeric", default = 0.5, 
+              help="desired proportion of total genetic variance that is between parental groups at causal loci [default= %default]", metavar="character"),
+  make_option(c("--fstn", "-f"), type="numeric", default = 0.5, 
+              help="desired proportion of total genetic variance that is between parental groups at noncausal loci [default= %default]", metavar="character"),
+  make_option(c("--h2", "-H"), type = "numeric", default = 0.8,
+              help = "simulated heritability [default = %default]"),
   make_option(c("--theta", "-t"), type="numeric", default=0.5, 
               help="admixture proportion [default= %default]", metavar="character"),
-  make_option(c("--venv", "-e"), type = "numeric", default = 0, 
-              help = "desired environmental variance [default = %default]", metavar="character"),
   make_option(c("--nloci", "-l"), type = "numeric", default = 1000, 
               help = "number of loci  [default = %default]", metavar="character"),
   make_option(c("--pcausal", "-p"), type = "numeric", default = 0.2, 
@@ -33,40 +33,61 @@ print("setting up")
 
 #Set up the parameters.
 fbar = 0.5 # total frequency in the parental population
-vgt = opt$vgt #desired total genetic variance
+
+#vgt = opt$vgt #desired total genetic variance
+vgt = opt$h2
 theta = opt$theta #admixture fraction
-vgb = opt$vgb #desired genetic variance in between
+#vgb = opt$vgb #desired genetic variance in between
+vgb = opt*fstc * vgt
 nloci = opt$nloci #number of loci, not necessary causal variants
 pcausal = opt$pcausal # proportion of causal variants
 ncausal = round(pcausal*nloci) # get number of causal variants
 #seed=opt$seed #random seed, 100
-venv = opt$venv # environmental variance
+venv = 1 - opt*h2 # environmental variance
 sample_size = opt$sample_size # sample size of simulated admixed people
 
 filename <- paste0("_prop", theta, "_vgb", vgb, "_vgt", vgt, "_venv", venv) #for filename
 #set.seed(seed)
 
 #vgb = vgt*Fst
-fst = vgb/vgt
+#fst = vgb/vgt
 #next, calculate frequency difference required to generate that Fst
 #fst = (f1 - f2)^2 / 4*pbar*(1-pbar)
-fdiff = sqrt(fst*4*fbar*(1-fbar))
+fdiffc = sqrt(fstc*4*fbar*(1-fbar))
 #solve system of linear equation
-f1_f2 = solve(a = matrix(c(0.5, 1, 0.5, -1), nrow = 2, ncol = 2), 
-              b = c(fbar, fdiff))
+f1_f2c = solve(a = matrix(c(0.5, 1, 0.5, -1), nrow = 2, ncol = 2), 
+              b = c(fbar, fdiffc))
+
 # 0.5*f1+0.5*f2=fbar
 # f1-f2=fdiff
 # given fbar and fdiff, solve the linear equation to get f1,f2
-f1 = f1_f2[1]
-f2 = f1_f2[2]
+f1c = f1_f2c[1]
+f2c = f1_f2c[2]
+
+################ non causal loci ####################
+
+#fst = (f1 - f2)^2 / 4*pbar*(1-pbar)
+fdiffn = sqrt(fstn*4*fbar*(1-fbar))
+#solve system of linear equation
+f1_f2n = solve(a = matrix(c(0.5, 1, 0.5, -1), nrow = 2, ncol = 2), 
+               b = c(fbar, fdiffn))
+
+# 0.5*f1+0.5*f2=fbar
+# f1-f2=fdiff
+# given fbar and fdiff, solve the linear equation to get f1,f2
+f1n = f1_f2n[1]
+f2n = f1_f2n[2]
 
 print("simulating genotypes and local ancestry")
 
+
+######causal 
+
 #simulate genotypes for pop1 (1000 loci and 1000 individuals)
 #including non-causal variants
-geno1 = replicate(nloci, rbinom(1000, 2, f1))
+geno1 = replicate(ncausal, rbinom(1000, 2, f1))
 #simulate genotypes for pop2
-geno2 = replicate(nloci, rbinom(1000, 2, f2))
+geno2 = replicate(ncausal, rbinom(1000, 2, f2))
 
 #Sample effect sizes for the causal loci 
 #such that the genetic variance in the total population is 1.
@@ -79,34 +100,59 @@ bg = matrix(
 #standardize to remove stochasticity in realized values
 bg = ((bg - mean(bg)) / sd(bg)) * sqrt(vgt/(ncausal*2*fbar*(1-fbar)))
 
-#add 0s for non-causal loci
-bg = sample(c(bg, rep(0, nloci - ncausal)))
-
 #calculate variance between populations
-pbar = (f1 + f2)/2
-vtotal = sum(2 * bg^2 * pbar * (1 - pbar))
-vwithin = sum(2*(bg^2)*f1*(1 - f1) + 2*(bg^2)*f2*(1 - f2))/2
-vbetween = vtotal - vwithin
+# pbar = (f1 + f2)/2
+# vtotal = sum(2 * bg^2 * pbar * (1 - pbar))
+# vwithin = sum(2*(bg^2)*f1*(1 - f1) + 2*(bg^2)*f2*(1 - f2))/2
+# vbetween = vtotal - vwithin
 
 #Simulate local ancestry and genotypes for admixed population 
 #such that the admixture fraction is 0.5.
-lanc = replicate(nloci, rbinom(sample_size, 2, theta))
+lanc_c = replicate(ncausal, rbinom(sample_size, 2, theta))
+
 #simulate genotypes at each locus given the ancestry at that locus.
-geno.admix = structure(sapply(lanc, function(x){
+
+#causal
+geno.admix_c = structure(sapply(lanc_c, function(x){
   if(x == 0){
-    g1 = rbinom(1, 1, f1)
-    g2 = rbinom(1, 1, f1)
+    g1 = rbinom(1, 1, f1c)
+    g2 = rbinom(1, 1, f1c)
   }
   if(x == 1){
-    g1 = rbinom(1, 1, f1)
-    g2 = rbinom(1, 1, f2)
+    g1 = rbinom(1, 1, f1c)
+    g2 = rbinom(1, 1, f2c)
   }
   if(x == 2){
-    g1 = rbinom(1, 1, f2)
-    g2 = rbinom(1, 1, f2)
+    g1 = rbinom(1, 1, f2c)
+    g2 = rbinom(1, 1, f2c)
   }
   return(g1 + g2)
 }), dim = dim(lanc))
+
+
+#########non-causal
+
+lanc_n = replicate(nloci - ncausal, rbinom(sample_size, 2, theta))
+
+geno.admix_n = structure(sapply(lanc_n, function(x){
+  if(x == 0){
+    g1 = rbinom(1, 1, f1n)
+    g2 = rbinom(1, 1, f1n)
+  }
+  if(x == 1){
+    g1 = rbinom(1, 1, f1n)
+    g2 = rbinom(1, 1, f2n)
+  }
+  if(x == 2){
+    g1 = rbinom(1, 1, f2n)
+    g2 = rbinom(1, 1, f2n)
+  }
+  return(g1 + g2)
+}), dim = dim(lanc))
+
+geno.admix = cbind(geno.admix_c, geno.admix_n)
+
+bg = c(bg, rep(0, nloci - ncausal))
 
 #Simulate genetic values in the admixed population.
 gvalue.admix = t(t(bg)%*%t(geno.admix))
