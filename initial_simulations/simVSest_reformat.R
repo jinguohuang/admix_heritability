@@ -4,11 +4,11 @@ args = commandArgs(trailingOnly=TRUE)
 # add geno gcta results in to the table
 library(data.table)
 theta=args[1]
-vgb=args[2]
-vgt=args[3]
-venv=args[4]
+fstc=args[2]
+fstn=args[3]
+pcausal=args[4]
 
-filename <- paste0("_prop", theta, "_vgb", vgb, "_vgt", vgt, "_venv", venv) 
+filename <- paste0("_prop", theta, "_fstc", fstc, "_fstn", fstn, "_pcausal", pcausal) #for filename
 
 simfile<-paste0("sim", filename ,"_expected.txt")
 estfile<-paste0("admix",filename, ".reml.hsq")
