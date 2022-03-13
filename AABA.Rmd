@@ -1,0 +1,173 @@
+---
+title: "b/w pop variance validation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Checking to see if different ways of calculting genetic variance should give the same answer. 
+
+Formula 1:
+
+$V_g = \sum_{i = 1}^M \beta_i^2 (f_i^{CEU} - f_i^{YRI})^2 + \sum_{i=1}^M\sum_{j \neq i}cov(x_i, x_j)$
+
+where $x_i$ is the combined genotype vector of all individuals from both CEU and YRI at the $i^{th}$ locus.
+
+Formula 2:
+
+$V_g = \frac{\sum_{k=1}^N (g^{CEU}_k - \bar{g})^2 + \sum_{k=1}^N (g^{YRI}_k - \bar{g})^2}{2}$
+
+where $g^{CEU}_k$ is the genetic value of the $k^{th}$ individual from CEU and $\bar{g}$ is the mean genetic value across all individuals from both CEU and YRI. 
+
+We will use the frequency and effect sizes from Crawford et al. since that study was done in Africans and therefore, is least likely to suffer from an ascertainment bias. It was also done on a quantitative phenotype (Melanin index) rather than for self-reported pigmentation.
+
+```{r}
+
+
+library(ggplot2)
+library(data.table)
+
+F = rprojroot::is_rstudio_project$make_fix_file()
+
+#dat.ju = fread(F("data/freq_ju_light_beta.txt"))
+dat.crawford = fread(F("data/freq_crawford_light_beta.txt"))
+#dat.beleza = fread(F("data/freq_beleza_light_beta.txt"))
+
+#function to calculate vg per snp in both populations
+cal.vg = function(dat){
+  dat[, vg.yri:=Beta^2 *2*fYRI*(1-fYRI)]
+  dat[, vg.ceu:=Beta^2 *2*fCEU*(1-fCEU)]
+  return(dat)
+}
+
+cal.vg(dat.ju)
+cal.vg(dat.beleza)
+cal.vg(dat.crawford)
+
+```
+
+Convert frequency to dark allele frequency and the effect sizes to positive (increasing pigmentation)
+
+```{r}
+
+dat.crawford[,Beta := abs(Beta)]
+dat.crawford[,fYRI := 1 - fYRI] #1- frequency of light allele
+dat.crawford[,fCEU := 1 - fCEU]
+
+#plot the distribution of the dark allele in both populations
+ggplot(dat.crawford)+
+  geom_point(aes(fYRI,fCEU), alpha = 0.6)+
+  theme_classic()+
+  labs(x = "Freq. of dark allele (African)",
+       y = "Freq. of dark allele (European)")
+```
+
+We can see that the dark allele goes from 0 to 1 in Africans but is almost absent in Europeans (max frequency of 0.18).
+
+Calculate the genetic variance in Europeans as a fraction of the genetic variance in Africans.
+
+```{r}
+
+sum(dat.crawford$vg.ceu)/sum(dat.crawford$vg.yri)
+
+```
+
+The additive genetic variance in CEU is 10% the genetic variance in Africans.
+
+Now, let's simulate the genotypes in both populations at these loci and calculate the between-population genetic variance using formula 2.
+
+```{r}
+
+geno1 = sapply(dat.crawford$fCEU, function(x){ rbinom(1e4, 2, x)})
+geno2 = sapply(dat.crawford$fYRI, function(x){ rbinom(1e4, 2, x)})
+gvalue1 = geno1%*%dat.crawford$Beta
+gvalue2 = geno2%*%dat.crawford$Beta
+
+gvalue.mean = mean(c(gvalue1, gvalue2))
+
+#formula 2
+vg2 = (mean((gvalue1 - gvalue.mean)^2) + mean((gvalue2 - gvalue.mean)^2))/2
+
+vg2
+```
+
+Now calculate the genetic variance using formula 1. For this, we need the genic variance as well as the covariance component (second term).
+
+```{r}
+
+vg2.genic = with(dat.crawford, sum(Beta^2*(fCEU - fYRI)^2))
+
+#claculate pairwise covariance across loci  
+cv = matrix(NA, nrow = nsnps, ncol = nsnps)
+for(i in 1:nsnps){
+  for(j in 1:nsnps){
+    gi = c(geno1[,i], geno2[,i])
+    gj = c(geno1[,j], geno2[,j])
+    cv[i,j] = dat.crawford$Beta[i]*dat.crawford$Beta[j]*cov(gi, gj)
+  }
+}
+
+#set diagonal to 0 (this is the genic variance contributed by each locus separately which we have already calculated) - you can check this
+diag(cv)<-0
+vg2 = vg2.genic + sum(cv)
+
+vg2
+
+
+```
+
+This value is extremely close to that calculated using formula 2. It is slightly off because we are approximating the genic variance in formula 1 with allele frequency rather than using the realized genotypes directly.
+
+Let's simulate some phenotypes for admixed individuals without any structure.
+
+```{r}
+
+#simulate local ancestry in admixed population
+#admixture fraction: theta
+nsnps = nrow(dat.crawford)
+lanc = replicate(nsnps, rbinom(1e4, 2, 0.8))
+
+#simulate genotypes
+g.admix = matrix(NA, nrow = 1e4, ncol = nsnps)
+for(i in 1:nsnps){
+  f.yri = dat.crawford$fYRI[i]
+  f.ceu = dat.crawford$fCEU[i]
+  g.admix[,i] = sapply(lanc[,i], function(x){
+    if(x == 0){
+      g = rbinom(1, 2, f.ceu)
+    }
+    if(x == 1){
+      g1 = rbinom(1, 1, f.yri)
+      g2 = rbinom(1, 1, f.ceu)
+      g = g1+g2
+    }
+    if(x == 2){
+      g = rbinom(1, 2, f.yri)
+    }
+    return(g)
+  })
+}
+
+gvalue.admix = g.admix%*%dat.crawford$Beta
+
+gvalue.dat = data.table(gv1 = gvalue1[,1], gv2 = gvalue2[,1], gv.admix = gvalue.admix[,1])
+
+ggplot(gvalue.dat)+
+  geom_histogram(aes(gv1), fill = "blue", alpha = 0.5)+
+  geom_histogram(aes(gv2), fill = "red", alpha = 0.5)+
+  geom_histogram(aes(gv.admix), fill = "purple", alpha = 0.5)+
+  theme_classic()+
+  labs(x = "Genetic value", 
+       y = "Count")
+
+```
+
+The blue is simulated-CEU, the red is simulated-YRI, and the purple is simulated-admixed (African Americans).
+
+
+
+
+
+
