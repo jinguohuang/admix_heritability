@@ -42,8 +42,6 @@ cal.vg = function(dat){
   return(dat)
 }
 
-cal.vg(dat.ju)
-cal.vg(dat.beleza)
 cal.vg(dat.crawford)
 
 ```
@@ -65,6 +63,12 @@ ggplot(dat.crawford)+
 ```
 
 We can see that the dark allele goes from 0 to 1 in Africans but is almost absent in Europeans (max frequency of 0.18).
+
+```{r}
+ggplot(dat.crawford, aes(Beta, abs(fYRI-fCEU)))+
+  geom_point()
+```
+
 
 Calculate the genetic variance in Europeans as a fraction of the genetic variance in Africans.
 
