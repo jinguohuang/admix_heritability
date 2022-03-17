@@ -31,9 +31,10 @@ library(data.table)
 
 F = rprojroot::is_rstudio_project$make_fix_file()
 
-#dat.ju = fread(F("data/freq_ju_light_beta.txt"))
+dat.ju = fread(F("data/freq_ju_light_beta.txt"))
 dat.crawford = fread(F("data/freq_crawford_light_beta.txt"))
-#dat.beleza = fread(F("data/freq_beleza_light_beta.txt"))
+dat.beleza = fread(F("data/freq_beleza_light_beta.txt"))
+dat.martin = fread(F("martinetal"))
 
 #function to calculate vg per snp in both populations
 cal.vg = function(dat){
@@ -43,6 +44,9 @@ cal.vg = function(dat){
 }
 
 cal.vg(dat.crawford)
+cal.vg(dat.martin)
+
+sum(with(dat.ju, Beta^2*(fCEU - fYRI)^2))
 
 ```
 
@@ -60,6 +64,7 @@ ggplot(dat.crawford)+
   theme_classic()+
   labs(x = "Freq. of dark allele (African)",
        y = "Freq. of dark allele (European)")
+
 ```
 
 We can see that the dark allele goes from 0 to 1 in Africans but is almost absent in Europeans (max frequency of 0.18).
@@ -101,8 +106,9 @@ Now calculate the genetic variance using formula 1. For this, we need the genic 
 
 ```{r}
 
-vg2.genic = with(dat.crawford, sum(Beta^2*(fCEU - fYRI)^2))
+vg2.genic = with(dat.crawford, sum(Beta^2*(fCEU - fYRI)^2)/2)
 
+nsnps = nrow(dat.crawford)
 #claculate pairwise covariance across loci  
 cv = matrix(NA, nrow = nsnps, ncol = nsnps)
 for(i in 1:nsnps){
@@ -169,6 +175,22 @@ ggplot(gvalue.dat)+
 ```
 
 The blue is simulated-CEU, the red is simulated-YRI, and the purple is simulated-admixed (African Americans).
+
+What fraction of the total genetic variance 
+
+```{r}
+
+
+dat.crawford[, fbar := (fCEU + fYRI)/2]
+vg.total = sum(with(dat.crawford, 2*Beta^2 *fbar*(1-fbar))) + sum(cv)
+vgb.genic = with(dat.crawford, sum(Beta^2*(fCEU - fYRI)^2)/2)
+vgb = vgb.genic + sum(cv)
+vg.ceu = with(dat.crawford, sum(vg.ceu))
+vg.yri = with(dat.crawford, sum(vg.yri))
+
+```
+
+
 
 
 
