@@ -31,10 +31,10 @@ library(data.table)
 
 F = rprojroot::is_rstudio_project$make_fix_file()
 
-dat.ju = fread(F("data/freq_ju_light_beta.txt"))
+#dat.ju = fread(F("data/freq_ju_light_beta.txt"))
 dat.crawford = fread(F("data/freq_crawford_light_beta.txt"))
-dat.beleza = fread(F("data/freq_beleza_light_beta.txt"))
-dat.martin = fread(F("martinetal"))
+#dat.beleza = fread(F("data/freq_beleza_light_beta.txt"))
+#dat.martin = fread(F("martinetal"))
 
 #function to calculate vg per snp in both populations
 cal.vg = function(dat){
@@ -44,9 +44,7 @@ cal.vg = function(dat){
 }
 
 cal.vg(dat.crawford)
-cal.vg(dat.martin)
 
-sum(with(dat.ju, Beta^2*(fCEU - fYRI)^2))
 
 ```
 
@@ -69,17 +67,20 @@ ggplot(dat.crawford)+
 
 We can see that the dark allele goes from 0 to 1 in Africans but is almost absent in Europeans (max frequency of 0.18).
 
-```{r}
-ggplot(dat.crawford, aes(Beta, abs(fYRI-fCEU)))+
-  geom_point()
-```
-
-
 Calculate the genetic variance in Europeans as a fraction of the genetic variance in Africans.
 
 ```{r}
 
-sum(dat.crawford$vg.ceu)/sum(dat.crawford$vg.yri)
+dat.crawford[1:33, Region := 1]
+dat.crawford[34:43, Region := 2]
+dat.crawford[44:48, Region := 3]
+dat.crawford[49:59, Region := 4]
+
+prop2 = matrix(NA, nrow = 100, ncol = 1)
+for(i in 1:100){
+  dat.crawford2 = dat.crawford[,.SD[sample(.N, 1)], by = Region]
+  prop2[i,] = sum(dat.crawford2$vg.ceu)/sum(dat.crawford2$vg.yri)
+}
 
 ```
 
@@ -89,17 +90,22 @@ Now, let's simulate the genotypes in both populations at these loci and calculat
 
 ```{r}
 
-geno1 = sapply(dat.crawford$fCEU, function(x){ rbinom(1e4, 2, x)})
-geno2 = sapply(dat.crawford$fYRI, function(x){ rbinom(1e4, 2, x)})
-gvalue1 = geno1%*%dat.crawford$Beta
-gvalue2 = geno2%*%dat.crawford$Beta
+vg2 = matrix(NA, nrow = 100, ncol = 1)
 
-gvalue.mean = mean(c(gvalue1, gvalue2))
-
-#formula 2
-vg2 = (mean((gvalue1 - gvalue.mean)^2) + mean((gvalue2 - gvalue.mean)^2))/2
+for(i in 1:100){
+  geno1 = sapply(dat.crawford$fCEU, function(x){ rbinom(1e4, 2, x)})
+  geno2 = sapply(dat.crawford$fYRI, function(x){ rbinom(1e4, 2, x)})
+  gvalue1 = geno1%*%dat.crawford$Beta
+  gvalue2 = geno2%*%dat.crawford$Beta
+  
+  gvalue.mean = mean(c(gvalue1, gvalue2))
+  
+  #formula 2
+  vg2 = (mean((gvalue1 - gvalue.mean)^2) + mean((gvalue2 - gvalue.mean)^2))/2
+}
 
 vg2
+
 ```
 
 Now calculate the genetic variance using formula 1. For this, we need the genic variance as well as the covariance component (second term).
@@ -124,7 +130,6 @@ diag(cv)<-0
 vg2 = vg2.genic + sum(cv)
 
 vg2
-
 
 ```
 
@@ -180,7 +185,6 @@ What fraction of the total genetic variance
 
 ```{r}
 
-
 dat.crawford[, fbar := (fCEU + fYRI)/2]
 vg.total = sum(with(dat.crawford, 2*Beta^2 *fbar*(1-fbar))) + sum(cv)
 vgb.genic = with(dat.crawford, sum(Beta^2*(fCEU - fYRI)^2)/2)
@@ -191,6 +195,34 @@ vg.yri = with(dat.crawford, sum(vg.yri))
 ```
 
 
+```{r}
+
+vg = matrix(NA, nrow = 100, ncol = 3)
+for(k in 1:100){
+  snps = dat.crawford[,sample(.I, 1), by = Region]$V1
+  #claculate pairwise covariance across loci  
+  cv2 = matrix(NA, nrow = 4, ncol = 4)
+  for(i in 1:4){
+    ix1 = snps[i]
+    for(j in 1:4){
+      ix2 = snps[j]
+      gi = c(geno1[,ix1], geno2[,ix1])
+      gj = c(geno1[,ix2], geno2[,ix2])
+      cv2[i,j] = dat.crawford$Beta[i]*dat.crawford$Beta[j]*cov(gi, gj)
+    }
+  }
+  cv2[diag(cv2)] = 0
+  vg[k,1] = sum(cv2)
+  vg[k,2] = sum(with(dat.crawford[snps,], 2*Beta^2 *fbar*(1-fbar))) + sum(cv2)
+  vg[k,3] = with(dat.crawford[snps,], sum(Beta^2*(fCEU - fYRI)^2)/2) + sum(cv2)
+
+}
+
+
+mean(vg[,3]/vg[,2])
+
+  
+```
 
 
 
