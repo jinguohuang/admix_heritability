@@ -1,13 +1,16 @@
 #!/usr/bin/env Rscript
 # naive simulation to get expected vs observed value in parental groups
-# assortative mating
+# assortative mating 
+# update in multiple generations, add time 
+# update parental freq draw so rare variants are avoided 
+# update effect size so it's freq dependent
 # output lanc of admixed pop 
-
+# output lanc of metapop (Parental)
 #start.time <- Sys.time()
 
 ####################  Functions to be used ########################
 
-# https://github.com/menglin44/APRICOT/blob/main/R/load_main_geno.R
+# some from https://github.com/menglin44/APRICOT/blob/main/R/load_main_geno.R
 
 # global anc proprotions from beta distribution
 GAncBeta <- function(mean, var, samplesize){
@@ -41,6 +44,24 @@ af <- function(genos) sum(genos)/(2*length(genos))
 # calc maf
 maf <- function(genos) 0.5-abs(0.5-af(genos))
 
+
+# function to output local ancestry to plink file
+LAnc2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs){
+  # transpose and add map
+  lanc.t<-t(lanc)
+  map = data.frame(SNP = paste0(1, "_", 1:nloci, "_AG"), A1 = "A", A2 = "G")
+  lanc.t = cbind(map, lanc.t)
+  write.table(lanc.t, file = paste0(filename, ".dosage"), 
+              quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
+  # make tfam file
+  fam<-data.frame(FID=FID,IID=1:samplesize, FID=0, MID=0, SEX=0, Pheno=-9 )
+  write.table(fam, file = paste0(filename, ".tfam"), 
+              quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
+  phenotype = cbind(fam[,c(1,2)], prs)
+  write.table(phenotype, file = paste0(filename, ".pheno"), 
+              quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
+}
+
 ################### Set up the parameters ########################
 
 library(data.table)
@@ -60,7 +81,9 @@ option_list = list(
   make_option(c("--seed"), type="numeric", default=120, 
               help="random seed [default= %default]", metavar="character"),
   make_option(c("--pganc", "-P"), type = "numeric", default = 0, 
-              help = "assortative mating strength [default = %default]", metavar="character")
+              help = "assortative mating strength [default = %default]", metavar="character"),
+  make_option(c("--gen", "-t"), type = "numeric", default = 1, 
+              help = "number of generations since admixture [default = %default]", metavar="character")
 )
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -77,7 +100,8 @@ adm_indv = opt$sample_size #sample size of admixed pop
 #sd_ganc = 0.1 #sd of global ancestry
 seed = opt$seed
 P = opt$pganc
-filename <- paste0("admix", "_fst", fst, "_psel", p_sel, "_seed", seed, "_P", P) #for filename
+t = opt$gen
+filename <- paste0("admix", "_fst", fst, "_psel", p_sel, "_seed", seed, "_P", P, "_t", t) #for filename
 set.seed(seed)
 
 ################### simulate parental groups genotype  ########################
@@ -98,36 +122,49 @@ for (s in 1:nloci) {
   p.pop1 <- 0
   p.pop2 <- 0
   anc.frq <- runif(1, min=1e-3, max=0.999)
-  #Balding-Nichol model, also make sure 0<frq<1
-  while((p.pop1 <= 0 || p.pop1 >= 1) || p.pop2 <= 0 || p.pop2 >= 1){
+  #Balding-Nichol model, also make sure 0.01<frq<0.99, so rare variants are avoided
+  while((p.pop1 <= 0.01 || p.pop1 >= 0.99) || p.pop2 <= 0.01 || p.pop2 >= 0.99){
     p.pop1 <- rbeta(1, anc.frq*(1-fst)/fst,(1-anc.frq)*(1-fst)/fst)
     p.pop2 <- rbeta(1, anc.frq*(1-fst)/fst,(1-anc.frq)*(1-fst)/fst)
   }
   f1[s] <- p.pop1
   f2[s] <- p.pop2
 }
-
+fbar = (f1+f2)/2
 fdiff = f1 - f2 #freq difference
 
 # simulate parental genotype based on frequency
 geno1 <- matrix(rbinom(nloci*n1_indv, 2, f1), byrow=T, nrow=n1_indv, ncol=nloci)
 geno2 <- matrix(rbinom(nloci*n2_indv, 2, f2), byrow=T, nrow=n2_indv, ncol=nloci)
 
+# simulate parental lanc, local ancestry per marker: 0/1/2 copies of pop1 ancestry
+# pop1 all 2, pop2 all 0
+lanc1 <- matrix(rep(2, nloci*n1_indv), byrow=T, nrow=n1_indv, ncol=nloci)
+lanc2 <- matrix(rep(0, nloci*n2_indv), byrow=T, nrow=n2_indv, ncol=nloci)
+
+# initial lanc of metapop
+lanc_meta = rbind(lanc1, lanc2)
+
+# simulate global ancestry of parental meta groups
+# mother or father could from either pop
+# here we could adjust the sample size to adjust theta
+ganc_meta = c(rep(1, n1_indv), rep(0, n2_indv)) 
 
 ###################  simulate effect size  ########################
 print("simulate effect size")
 # Sample effect sizes such that beta follow normal distribution, 
 # with variance of 1/2nfbar(1-fbar)
 
-favg = sum(f1,f2)/(2*nloci) # calculate average allele freq
+#favg = sum(f1,f2)/(2*nloci) # calculate average allele freq
 
 # Choose effect sizes from the standard normal distribution N(0, 1/2*f*(1-f))
 bg = matrix(
-  rnorm(nloci, 0, sd = sqrt(1/(2*nloci*favg*(1-favg)))), 
+  rnorm(nloci, 0, sd = sqrt(1/(2*nloci*fbar*(1-fbar)))), 
   nrow = nloci, ncol = 1)
 
+
 #standardize to remove stochasticity in realized values
-bg = ((bg - mean(bg)) / sd(bg)) * sqrt(1/(2*nloci*favg*(1-favg)))
+bg = ((bg - mean(bg)) / sd(bg)) * sqrt(1/(2*nloci*fbar*(1-fbar)))
 
 # For some fraction p of the loci, choose the effect direction to be such that 
 # the allele that is more frequent in population 1 has a positive effect. 
@@ -151,8 +188,7 @@ if (p_sel == 0){
 
 ###################  Calculate expected genetic variance in parental ########################
 print("Calculate expected genetic variance in parental")
-geno = rbind(geno1, geno2) #metapop genotype
-
+#geno = rbind(geno1, geno2) #metapop genotype
 #claculate pairwise covariance across loci in metapop
 #cv = matrix(NA, nrow = nloci, ncol = nloci)
 #cv_cov = matrix(NA, nrow = nloci, ncol = nloci)
@@ -168,7 +204,7 @@ geno = rbind(geno1, geno2) #metapop genotype
 #vtotal.cov=sum(cv) # covariance part
 
 # calculate expected value in parental groups
-fbar = (f1+f2)/2 
+#fbar = (f1+f2)/2 
 vtotal.genic = sum(2* bg_sel^2 * fbar * (1-fbar))
 vbetween.genic = sum( bg_sel^2 * (f1-f2)^2) /2
 vwithin.exp = sum(2*(bg_sel^2)*f1*(1 - f1) + 2*(bg_sel^2)*f2*(1 - f2))/2
@@ -185,8 +221,8 @@ pop2_prs <- apply(geno2, MARGIN=1, FUN=indiv_prs, beta=bg_sel)
 # calculate observed value
 prs.mean = mean(c(pop1_prs, pop2_prs))
 prs.diff = mean(pop1_prs) - mean(pop2_prs) # mean prs difference
-
-vtotal.obs = var(c(pop1_prs, pop2_prs))
+meta_prs = c(pop1_prs, pop2_prs)
+vtotal.obs = var(meta_prs)
 
 # calculate variance within each groups
 g1.var = var(pop1_prs)
@@ -203,42 +239,45 @@ print("simulate admixed population")
 # simulate global ancestry of admix pop
 #ganc <- GAncBeta(theta, sd_ganc^2, adm_indv) #neutral
 
-# simulate global ancestry of parental meta groups
-# mather or father could from either pop
-# here we could adjust the sample size to adjust theta
-ganc_meta = c(rep(1, n1_indv), rep(0, n2_indv)) 
-
 # get parental global ancestry combination 
 # and calculate the ganc of admix pop
 corrthresh = 0.01 #correlation threshold
-u = 100
-l = 0
-c = -2*corrthresh
-iter = 1
-clist = c
-# search for mate pairs to meet the P
-while(abs(c-P) > corrthresh){
-    iter = iter + 1
-    s = (u+l)/2
-    #print(sprintf('c = %f s = %f P = %f iter = %d', c, s, P, iter))
-    #sort the score and get the index of the sorted list
-    idxm = sort(ganc_meta  + rnorm(n, 0, 1)*s, index.return=TRUE)$ix 
-    idxf = sort(ganc_meta  + rnorm(n, 0, 1)*s, index.return=TRUE)$ix
-    # correlation of ganc of mat and fat
-    c = cor(ganc_meta[idxf],ganc_meta[idxm]) # get correlation of ganc
-    clist[iter] = c # store the correlation
-    if(c < P){ #adjust s to smaller value if c is smaller 
-      u = s
-    }else{ #adjust s to larger value if c is larger 
-        l = s
-        }
-    #if(iter%%100 == 0){
-    #  print(sprintf('stuck with %d iterations\n', iter))
-    #  }
+for (i in 1:t){ #generation of admixture
+  u = 100
+  l = 0
+  c = -2*corrthresh
+  iter = 1
+  clist = c
+  # search for mate pairs to meet the P
+  while(abs(c-P) > corrthresh){
+      iter = iter + 1
+      s = (u+l)/2
+      #print(sprintf('c = %f s = %f P = %f iter = %d', c, s, P, iter))
+      #sort the score and get the index of the sorted list
+      idxm = sort(ganc_meta  + rnorm(n, 0, 1)*s, index.return=TRUE)$ix 
+      idxf = sort(ganc_meta  + rnorm(n, 0, 1)*s, index.return=TRUE)$ix
+      # correlation of ganc of mat and fat
+      c = cor(ganc_meta[idxf],ganc_meta[idxm]) # get correlation of ganc
+      clist[iter] = c # store the correlation
+      if(c < P){ #adjust s to smaller value if c is smaller 
+        u = s
+      }else{ #adjust s to larger value if c is larger 
+          l = s
+          }
+      #if(iter%%100 == 0){
+      #  print(sprintf('stuck with %d iterations\n', iter))
+      #  }
+  }
+  # calculate the global ancestry with the mate pairs
+  # update the global ancestry pool in the metapop each round
+  ganc_meta = (ganc_meta[idxf] + ganc_meta[idxm])/2
 }
-# calculate the global ancestry with the mate pairs
-ganc = (ganc_meta[idxf] + ganc_meta[idxm])/2
 
+
+ # track the mean and var of ganc_meta each generation
+ganc_mean = mean(ganc_meta)
+ganc_var = var(ganc_meta)
+ganc = ganc_meta
 
 #local ancestry per marker: 0/1/2 copies of pop1 ancestry
 lanc_p <- matrix(rbinom(adm_indv*nloci, 1, ganc), nrow=adm_indv, ncol=nloci)
@@ -258,30 +297,17 @@ adm_prs <- apply(geno_adm, MARGIN=1, FUN=indiv_prs, beta=bg_sel)
 ################### output local ancestry of admixed pop as plink input ########################
 
 print("writing to plink file")
-# transpose it and add map info: chrom, ID, cm (0), position
-library(data.table)
-lanc.t<-t(lanc_pop1)
-map = data.table(SNP = paste0(1, "_", 1:nloci, "_AG"), A1 = "A", A2 = "G")
-lanc.t = cbind(map, lanc.t)
-# output dosage file
-write.table(lanc.t, file = paste0(filename, ".dosage"), quote=FALSE, sep = '\t' ,
-            row.names = FALSE, col.names = FALSE)
-# output tfam file
-fam<-data.frame(FID="ADM",IID=1:adm_indv,FID=0,MID=0,SEX=0,Pheno=-9 )
-write.table(fam, file = paste0(filename, ".tfam"), quote=FALSE, sep = '\t' ,
-            row.names = FALSE, col.names = FALSE)
-# output phenotype file
-phenotype = cbind(fam[,c(1,2)], adm_prs)
-write.table(phenotype, file = paste0(filename, ".pheno"), quote=FALSE, sep = '\t' ,
-            row.names = FALSE, col.names = FALSE)
+# output the lanc of admixed
+LAnc2Plink(lanc_pop1, nloci, adm_indv, filename, FID="ADM", adm_prs)
+# output the lanc of parental metapop
+LAnc2Plink(lanc_meta, nloci, (n1_indv + n2_indv), paste0("meta_", filename), FID="meta", meta_prs)
 
 
 ################### output exp and obs value in parental groups ########################
 
 # write to file to record exp. and obs. value 
 sink(file=paste0("sim_",filename, "_exp_obs.txt"), type = "output")
-cat("vtotal.genic \t vtotal.obs \t vwithin.exp \t vwithin.obs \t vbetween.genic \t vbetween.obs \t fst \t p_sel \t prs.diff \t P \n")
-cat(vtotal.genic, "\t", vtotal.obs, "\t", vwithin.exp, "\t", vwithin.obs, "\t", vbetween.genic, "\t", vbetween.obs, "\t",  fst, "\t", p_sel, "\t", prs.diff, "\t", P, "\n")
+cat("vtotal.genic \t vtotal.obs \t vwithin.exp \t vwithin.obs \t vbetween.genic \t vbetween.obs \t fst \t p_sel \t prs.diff \t P \t t \n")
+cat(vtotal.genic, "\t", vtotal.obs, "\t", vwithin.exp, "\t", vwithin.obs, "\t", vbetween.genic, "\t", vbetween.obs, "\t",  fst, "\t", p_sel, "\t", prs.diff, "\t", P, "\t", t, "\n")
 sink()
-
 

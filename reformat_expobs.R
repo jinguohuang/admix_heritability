@@ -5,10 +5,12 @@ filename = args[1]
 
 library(data.table)
 estfile<-paste0(filename, ".reml.hsq")
+metafile<-paste0("meta_", filename, ".reml.hsq")
 simfile<-paste0("sim_",filename, "_exp_obs.txt")
 
 sim<-fread(simfile, header = FALSE)
 est<-fread(estfile, fill=TRUE)
+meta<-fread(metafile, fill=TRUE)
 #rownames(est)
 # function to reformat hsq file
 reformat <- function(x){
@@ -23,8 +25,14 @@ reformat <- function(x){
 est<-reformat(est)
 rownames(est)<-NULL #delete rownames
 
+meta<-reformat(meta)
+rownames(meta)<-NULL 
+
+# change rownames of meta
+meta[1,] = paste0(meta[1,], "_meta")
+
 # bind all together
-est_sim<-cbind(est, sim)
+est_sim<-cbind(est, sim, meta)
 
 # output
 write.table(est_sim, paste0("summary_",filename, ".txt"), quote=FALSE, sep = '\t' ,
