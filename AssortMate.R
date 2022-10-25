@@ -220,8 +220,9 @@ for (i in 1:(t+1)){
   ganc = ganc_meta[i,]
   set.seed(seed) #change this seed for different replication
   # local ancestry per marker: 0/1 copies of pop1 ancestry
-  lanc_p <- matrix(rbinom(n*nloci, 1, ganc), byrow=T, nrow=n, ncol=nloci)
-  lanc_m <- matrix(rbinom(n*nloci, 1, ganc), byrow=T, nrow=n, ncol=nloci)
+  # update: byrow=F
+  lanc_p <- matrix(rbinom(n*nloci, 1, ganc), byrow=F, nrow=n, ncol=nloci)
+  lanc_m <- matrix(rbinom(n*nloci, 1, ganc), byrow=F, nrow=n, ncol=nloci)
   lanc_adm <- lanc_p + lanc_m
   #admixed pop genotype 
   geno_adm <- t(sapply(c(1:n), FUN=LAnc2Geno, lanc_p=lanc_p, lanc_m=lanc_m, frq_pop1=f1, frq_pop2=f2))
