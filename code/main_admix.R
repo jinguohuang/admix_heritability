@@ -22,7 +22,7 @@ LAnc2Geno <- function(index,lanc_p,lanc_m, frq_pop1, frq_pop2){
 indiv_prs <- function(geno, beta=beta) return (sum(geno*beta))
 
 # function to output local ancestry to plink file
-LAnc2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs){
+LAnc2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs, ganc){
   # transpose and add map
   lanc.t<-t(lanc)
   map = data.frame(SNP = paste0(1, "_", 1:nloci, "_AG"), A1 = "A", A2 = "G")
@@ -35,6 +35,9 @@ LAnc2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs){
               quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
   phenotype = cbind(fam[,c(1,2)], prs)
   write.table(phenotype, file = paste0(filename, ".pheno"), 
+              quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
+  qcovar = cbind(fam[,c(1,2)], ganc)
+  write.table(qcovar, file = paste0(filename, ".qcovar"), 
               quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
 }
 
@@ -68,3 +71,16 @@ vg_term4 <- function(var.ganc, f1, f2, beta){
   # sum it up
   sum.term4 = sum(term4)*4*var.ganc
   return (sum.term4)} 
+
+# calculate variance, covariance and correlation
+pvar  = function(x){
+  mean((x - mean(x))^2)
+}
+
+pcov = function(x,y){
+  mean((x - mean(x))*(y - mean(y)))
+}
+
+pcor = function(x, y){
+  pcov(x, y)/(sqrt(pvar(x))*sqrt(pvar(y)))
+}
