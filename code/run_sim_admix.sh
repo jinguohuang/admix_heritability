@@ -9,13 +9,6 @@ cov=${5} #pos or neg
 seed=${6}
 
 
-echo "simulate admix lanc for seed ${seed} and P ${P}"
+echo "simulate admix for seed ${seed} and P ${P}"
 Rscript sim_admix.R -F 0.2 -l 1e3 -n 1e4 -p 0 -M ${model} --theta ${theta} -t ${gen} -P ${P} -C ${cov} --seed ${seed} 
 
-echo "orgnize result"
-filename=summary_admix_${model}_theta${theta}_gen${gen}_P${P}_${cov}_seed${seed}
-head -1 ${filename}_t0.txt > ${filename}
-for (( i=0; i<=${gen}; i++)); do cat <(tail -1 ${filename}_t${i}.txt) >> ${filename}; done
-
-echo "remove tmp files"
-rm ${filename}_t*.txt
