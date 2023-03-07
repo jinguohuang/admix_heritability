@@ -18,6 +18,7 @@
 # split the simulation files into parental simulation and admixed simulation
 # output the freq and beta of parental groups and global ancestry of each generation
 # update fbar with (f1+f2)/2 to keep vg same across CGF HI and different theta
+# output summary file with right dir
 
 ##########initializing##########
 source("main_admix.R")
@@ -227,7 +228,9 @@ nindiv_pop2 = n - nindiv_pop1
 ganc_meta = matrix(NA, nrow = t+1, ncol = n)
 ganc_meta[1,] = c(rep(1, nindiv_pop1), rep(0, nindiv_pop2)) 
 # get parental global ancestry combination and calculate the ganc of admix pop
-corrthresh = 0.01 #correlation threshold
+#corrthresh = 0.01 #correlation threshold
+corrthresh = 0.01
+set.seed(seed3) # so we have different var.theta
 for (i in 1:t){ #generation of admixture
   print(paste0("finding mating pairs for generation ", i))
   u = 100
@@ -256,6 +259,7 @@ for (i in 1:t){ #generation of admixture
   
   # ganc with migration
   # indidivual to be replaced
+  set.seed(seed3*3)
   migration1 = sample(1:n, size=round((m1+m2)*n), replace=F) 
   # CGF or HI
   if(m1+m2>0){ # confinuous geneflow
@@ -284,15 +288,16 @@ for (i in 1:t){ #generation of admixture
 
 # simulate admixed pop lanc from ganc
 # update filename with seed
-filename <- paste0("../data/admix_", model,"_theta", theta, "_gen", t, "_P", P, "_", cov, "_seed", seed)
+dirname <- paste0("../data/theta", theta, "_gen", t, "/summary", "/", model, "/")
+filename <- paste0("admix_", model,"_theta", theta, "_gen", t, "_P", P, "_", cov, "_seed", seed)
 # record summary stat of each generation
-output = matrix(NA, nrow = t+1, ncol = 15)
+output = matrix(NA, nrow = t+1, ncol = 17)
 
 for (i in 1:(t+1)){
   print(paste0("output for generation ", i-1))
   ganc <- ganc_meta[i,]
   
-  set.seed(seed3) #change this seed for different replication
+  set.seed(seed3*2) #change this seed for different replication
   # sample local ancestry given global ancestry
   # local ancestry per marker: 0/1 copies of pop1 ancestry
   # remove the byrow=T
@@ -325,8 +330,10 @@ for (i in 1:(t+1)){
   
   # record covariance and correlation between ancestry and trait
   cov.ganc.prsgeno <- pcov(ganc_adm, prs_geno)
+  cov.ganc.pheno <- pcov(ganc_adm, pheno)
   cov.ganc.prslanc <- pcov(ganc_adm, prs_lanc)
   cor.ganc.prsgeno <- pcor(ganc_adm, prs_geno)
+  cor.ganc.pheno <- pcor(ganc_adm, pheno)
   cor.ganc.prslanc <- pcor(ganc_adm, prs_lanc)
   
   # expected Vg terms
@@ -357,18 +364,20 @@ for (i in 1:(t+1)){
   output[i, 13] <- cov.ganc.prslanc
   output[i, 14] <- cor.ganc.prslanc
   output[i, 15] <- var.pheno
+  output[i, 16] <- cov.ganc.pheno 
+  output[i, 17] <- cor.ganc.pheno
   
   # output PLINK files: dosage, fam, pheno, covar (global ancestry)
-  plinkname <- paste0(filename, "_t", i-1) #for filename
-  plinkname_lanc <- paste0(filename, "_t", i-1, "_lanc")
+  #plinkname <- paste0(filename, "_t", i-1) #for filename
+  #plinkname_lanc <- paste0(filename, "_t", i-1, "_lanc")
   # check the genotype output
-  LAnc2Plink(geno_adm, nloci, n, plinkname, FID="ADM", pheno, ganc_adm) #prs_geno as pheno output
-  LAnc2Plink(lanc_adm, nloci, n, plinkname_lanc, FID="ADM", prs_lanc, ganc_adm) #prs_lanc as pheno output
+  #Geno2Plink(geno_adm, nloci, n, plinkname, FID="ADM", prs_geno, pheno, ganc_adm) #prs_geno as pheno output
+  #Geno2Plink(lanc_adm, nloci, n, plinkname_lanc, FID="ADM", prs_lanc, pheno, ganc_adm) #prs_lanc as pheno output
 }
 
 
 # add colnames
-colnames(output) <- c("t", "mean.theta", "var.theta", "var.prs.geno", "cov.ganc.prsgeno", "cor.ganc.prsgeno", "vg.term1", "vg.term2", "vg.term3", "vg.term4", "vg.sum", "var.prs.lanc", "cov.ganc.prslanc", "cor.ganc.prslanc", "var.pheno")
+colnames(output) <- c("t", "mean.theta", "var.theta", "var.prs.geno", "cov.ganc.prsgeno", "cor.ganc.prsgeno", "vg.term1", "vg.term2", "vg.term3", "vg.term4", "vg.sum", "var.prs.lanc", "cov.ganc.prslanc", "cor.ganc.prslanc", "var.pheno", "cov.ganc.pheno", "cor.ganc.pheno")
 
 # add common features: theta, P, seed
 output<-as.data.table(output)
@@ -384,7 +393,7 @@ output$prs.diff <-prs.diff
 
 # write the output file
 write.table(output,
-        paste0(filename,".summary.txt",sep=""),
+        paste0(dirname, filename,".summary.txt",sep=""),
          col.names = TRUE,
          row.names=FALSE,
          quote=FALSE,

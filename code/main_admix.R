@@ -21,8 +21,8 @@ LAnc2Geno <- function(index,lanc_p,lanc_m, frq_pop1, frq_pop2){
 # prs on causal variants
 indiv_prs <- function(geno, beta=beta) return (sum(geno*beta))
 
-# function to output local ancestry to plink file
-LAnc2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs, ganc){
+# function to output genotype/local ancestry to plink file
+Geno2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs, pheno, ganc){
   # transpose and add map
   lanc.t<-t(lanc)
   map = data.frame(SNP = paste0(1, "_", 1:nloci, "_AG"), A1 = "A", A2 = "G")
@@ -30,14 +30,17 @@ LAnc2Plink <- function(lanc, nloci, samplesize, filename, FID=FID, prs, ganc){
   write.table(lanc.t, file = paste0(filename, ".dosage"), 
               quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
   # make tfam file
-  fam<-data.frame(FID=FID,IID=1:samplesize, FID=0, MID=0, SEX=0, Pheno=-9 )
+  fam = data.frame(FID=FID,IID=1:samplesize, FID=0, MID=0, SEX=0, Pheno=-9 )
   write.table(fam, file = paste0(filename, ".tfam"), 
               quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
-  phenotype = cbind(fam[,c(1,2)], prs)
-  write.table(phenotype, file = paste0(filename, ".pheno"), 
+  PRS = cbind(fam[,c(1,2)], prs)
+  write.table(PRS, file = paste0(filename, ".prs"), 
               quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
-  qcovar = cbind(fam[,c(1,2)], ganc)
-  write.table(qcovar, file = paste0(filename, ".qcovar"), 
+  Pheno = cbind(fam[,c(1,2)], pheno)
+  write.table(Pheno, file = paste0(filename, ".pheno"), 
+              quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
+  GAnc = cbind(fam[,c(1,2)], ganc)
+  write.table(GAnc, file = paste0(filename, ".ganc"), 
               quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
 }
 

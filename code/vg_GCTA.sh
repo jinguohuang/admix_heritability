@@ -1,4 +1,4 @@
-# estimate vg with gcta with and without ancestry as covariate
+# estimate vgamma with gcta with and without ancestry as covariate
 #!/bin/bash
 
 # make sure have plink2 and gcta installed and executable
@@ -12,37 +12,44 @@ cov=${5} #pos or neg
 seed=${6}
 t=${7}
 
-filename=../data/admix_${model}_theta${theta}_gen${gen}_P${P}_${cov}_seed${seed}_t${t}
+#source files
+plinkdir=../data/theta0.5_gen20/plink_lanc/${model} 
+phenodir=../data/theta0.5_gen20/pheno/${model}
+gancdir=../data/theta0.5_gen20/ganc/${model}
+#output files
+grmdir=../data/theta0.5_gen20/gcta_lanc/grm
+remldir=../data/theta0.5_gen20/gcta_lanc/reml_results/${model}
+remlwdir=../data/theta0.5_gen20/gcta_lanc/reml_results_wganc/${model}
 
-./plink2 --import-dosage ${filename}.dosage format=1 single-chr=1 noheader \
---fam ${filename}.tfam \
---make-bed --out ${filename}
+
+filename=admix_${model}_theta${theta}_gen${gen}_P${P}_${cov}_seed${seed}_t${t}_lanc
+filename1=admix_${model}_theta${theta}_gen${gen}_P${P}_${cov}_seed${seed}_t${t}
+
+./plink2 --import-dosage ${plinkdir}/${filename}.dosage format=1 single-chr=1 noheader \
+--fam ${plinkdir}/${filename}.tfam \
+--make-bed --out ${plinkdir}/${filename}
 
 # construct grm with gcta
-./gcta64 --bfile ${filename} \
---make-grm --out ${filename} \
+./gcta64 --bfile ${plinkdir}/${filename} \
+--make-grm --out ${grmdir}/${filename} \
 --thread-num 10
 
-# estimate vg without ancestry
+# estimate vgamma without ancestry
 
 ./gcta64 --reml \
---grm ${filename} \
---pheno ${filename}.pheno \
---out ${filename}.reml \
+--grm ${grmdir}/${filename} \
+--pheno ${phenodir}/${filename1}.pheno \
+--out ${remldir}/${filename}.reml \
 --thread-num 10 \
 --reml-no-constrain
 
-#paste -d"\t" sim_${filename}_exp_obs.txt <(echo -e "GCTA" | cat - <(sed -n '2p' ${filename}.reml.hsq | awk '{print $2}')) > summary_${filename}.txt
-
-
-# estimate Vg with ganc as covariate
+# estimate Vgamma with ganc as covariate
 
 ./gcta64 --reml \
---grm ${filename} \
---pheno ${filename}.pheno \
---qcovar ${filename}.qcovar \
---out ${filename}.ganc.reml \
+--grm ${grmdir}/${filename} \
+--pheno ${phenodir}/${filename1}.pheno \
+--qcovar ${gancdir}/${filename1}.ganc \
+--out ${remlwdir}/${filename}.ganc.reml \
 --thread-num 10 \
 --reml-no-constrain
 
-#paste -d"\t" summary_${filename}.txt <(echo -e "GCTA_ganc" | cat - <(sed -n '2p' ${filename}.ganc.reml.hsq | awk '{print $2}')) > summary_${filename}_ganc.txt
