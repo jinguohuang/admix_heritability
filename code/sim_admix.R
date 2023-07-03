@@ -48,7 +48,7 @@ option_list = list(
   make_option(c("--model", "-M"), default = "HI", 
               help = "admixture model: HI or CGF [default = %default]", metavar="character"),
   make_option(c("--cov", "-C"), default = "pos", 
-              help = "covariance sign: pos or neg [default = %default]", metavar="character")
+              help = "covariance sign: pos or neg, pos for divergent selection, neg for stabilizing selection [default = %default]", metavar="character")
 #  make_option(c("--m2"), type = "numeric", default = 0, 
 #              help = "migration rate from pop2 [default = %default]", metavar="character")
 )
