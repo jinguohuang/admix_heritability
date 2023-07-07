@@ -31,8 +31,7 @@ This repository contains codes used to carry out the analyses and create the mai
 
 * Fig4: $\hat{V}_g$: ```Rscript plot_GREML_vg.R```
 
-* Fig5: $\hat{V}_{\gamma}$
-
+* Fig5: $\hat{V}_{\gamma}$: ```Rscript plot_GREML_vgamma.R```
 
 * Fig6: Decomposing variance explained: ```Rscript plot_vgexplained.R```
  ```Rscript plot_vgexplainedVSvPRS.R ``` 
