@@ -1,24 +1,5 @@
-#!/usr/bin/env Rscript
-# naive simulation to get expected vs observed value in parental groups
-# assortative mating 
-# update in multiple generations, add time 
-# update parental freq draw so rare variants are avoided 
-# update effect size so it's freq dependent
-# output lanc of admixed pop and metapop (Parental)
-# update with fixed sample size
-# update with expected value of genetic variance due to lanc
-# update with both HI and CGF
-# update with output genetic variation due to genotype
-# update with total admixture proportion, and one direction migration
-# update with output lanc and pheno file prepared for GCTA
-# record mean phenotypic difference between parental groups, 
-# record corr(anc, PRS), corr(anc, PRS_lanc), var(anc), mean(anc)
-# partition genetic variance Vg into 4 terms, calculate and record them
-# modify seeds to control the beta sign distribution to get negative/positive cov 
-# split the simulation files into parental simulation and admixed simulation
-# output the freq and beta of parental groups and global ancestry of each generation
-# update fbar with (f1+f2)/2 to keep vg same across CGF HI and different theta
-# output summary file with right dir
+# Script generates simulated genotype and phenotype data 
+# and summary statistics of each generation of admixed populations
 
 ##########initializing##########
 source("main_admix.R")
@@ -48,7 +29,7 @@ option_list = list(
   make_option(c("--model", "-M"), default = "HI", 
               help = "admixture model: HI or CGF [default = %default]", metavar="character"),
   make_option(c("--cov", "-C"), default = "pos", 
-              help = "covariance sign: pos or neg, pos for divergent selection, neg for stabilizing selection [default = %default]", metavar="character")
+              help = "covariance sign of trait architecture: pos or neg, pos for divergent selection, neg for stabilizing selection [default = %default]", metavar="character")
 #  make_option(c("--m2"), type = "numeric", default = 0, 
 #              help = "migration rate from pop2 [default = %default]", metavar="character")
 )
@@ -59,24 +40,24 @@ print("setting up")
 fst = opt$fst # fst 
 nloci = opt$nloci #number of loci
 p_sel = opt$psel #selection strength
-n = opt$sample_size
-seed = opt$seed #seed for admix pop sample
-P = opt$pganc
-t = opt$gen
-#m1 = opt$m1
-#m2 = opt$m2
-m2 = 0 # one directional CFG
-theta = opt$theta
-model = opt$model
-cov = opt$cov
+n = opt$sample_size #number of individuals
+seed = opt$seed #seed for replicates for sampling admixed pop
+P = opt$pganc #assortative mating strength
+t = opt$gen #number of generations since admixture
+m2 = 0 # migration rate from pop2, one-directional CFG set it to 0
+theta = opt$theta # total admixture proportion
+model = opt$model # admixture model, HI or CGF
+cov = opt$cov # trait architecture: pos or neg, pos for divergent selection, neg for stabilizing selection
 
-seed1= 99 #seed for sampling freq and effect size
-seed2_pos=65
+# seed1 and 2 are chosen to deliver trait architecture in extreme cases for showcase
+seed1=99 #seed1 for sampling freq and effect size
+seed2_pos=65 #seed2 for trait architecture: pos or neg
 seed2_neg=84
-seed3=seed #seed for sampling admixed pop
+seed3=seed #seed3 for rep
 
-# if HI, m1=0
-# pi is the value of nindiv_pop1, at t=0, nindiv_pop1
+# if the model is HI, m1=0, one pulse admixture is theta
+# if the model is CGF, m1 is calculated with theta
+# pi is used to calculate the number of individuals in pop1 at t=0
 if( model == "HI") {
     m1=0
     pi=theta 
@@ -88,7 +69,8 @@ if( model == "HI") {
 print(paste0("m1= ", m1))
 
 
-# if pos, seed2
+# if the trait architecture is divergent selection - seed2_pos
+# if the trait architecture is stabilizing selection - seed2_neg
 if( cov == "pos") {
     seed2=seed2_pos
 } else { #neg
@@ -114,7 +96,7 @@ for (s in 1:nloci) {
   p.pop1 <- 0
   p.pop2 <- 0
   anc.frq <- runif(1, min=1e-3, max=0.999)
-  #Balding-Nichol model, also make sure 0.01<frq<0.99, so rare variants are avoided
+  # Balding-Nichol model, also make sure 0.01<frq<0.99, so rare variants are avoided
   while((p.pop1 <= 0.01 || p.pop1 >= 0.99) || p.pop2 <= 0.01 || p.pop2 >= 0.99){
     p.pop1 <- rbeta(1, anc.frq*(1-fst)/fst,(1-anc.frq)*(1-fst)/fst)
     p.pop2 <- rbeta(1, anc.frq*(1-fst)/fst,(1-anc.frq)*(1-fst)/fst)
@@ -123,7 +105,6 @@ for (s in 1:nloci) {
   f2[s] <- p.pop2
 }
 fbar = (f1+f2)/2
-#fbar = pi*f1 + (1-pi)*f2
 fdiff = f1 - f2 #freq difference
 
 # simulate parental genotype based on frequency
@@ -145,14 +126,14 @@ bg = ((bg - mean(bg)) / sd(bg)) * sqrt(1/(2*nloci*fbar*(1-fbar)))
 set.seed(seed2)
 bg_sign=sample(c(-1,1), nloci, replace=T) #for controling beta sign disribution
 
+if (p_sel == 0){ #default
+  bg_sel = bg * bg_sign 
+  }else{   
 # For some fraction p of the loci, choose the effect direction to be such that 
 # the allele that is more frequent in population 1 has a positive effect. 
 # The rest are random. 
 # weak selection, use prob f1/(f1+f2) decide the sign of selected loci
-# strong selection, use f1-f2 decide the sign of selected loci
-if (p_sel == 0){ 
-  bg_sel = bg* bg_sign
-  }else{
+# strong selection, use f1-f2 to decide the sign of selected loci
     sel_index <- sample(c(1:nloci), size=round(nloci*abs(p_sel)), replace=F) # sample selected loci
     bg_sel = matrix(NA, nrow = nloci, ncol = 1) 
     # selected index, change sign
@@ -174,28 +155,13 @@ bg_lanc = bg_sel * fdiff
 ##########Calculate expected genetic variance in parental##########
 
 print("Calculate expected genetic variance in parental")
-# calculate expected value in parental groups (1/2 intead of pi)
+# calculate expected value in parental groups 
 vtotal.genic = sum(2* bg_sel^2 * fbar * (1-fbar))
 vbetween.genic = sum( bg_sel^2 * (f1-f2)^2) * 2 * 0.5 * 0.5
 vwithin.exp = sum(0.5*2*(bg_sel^2)*f1*(1 - f1) + 0.5*2*(bg_sel^2)*f2*(1 - f2))
 
-# calculate term 1 coefficient only HI
-#varZ.sum1 = sum(bg_sel^2 * fdiff^2)
-#varZ.coef1 = vbetween.genic
-
-# calculate term 2 coefficient only HI
-#sum2 = matrix(, nrow = nloci, ncol = nloci)
-#for (i in 1:nloci){
-#  for (j in 1:nloci){
-#    sum2[i,j]=bg_sel[i]*bg_sel[j]*fdiff[i]*fdiff[j]
-#  }
-#}
-# make diagnal 0
-#diag(sum2) = 0
-# sum it up
-#varZ.coef2 = sum(sum2)
-
 ##########Calculate observed genetic variance in parental##########
+
 print("Calculate observed genetic variance in parental")
 # prs on causal variants
 pop1_prs <- apply(geno1, MARGIN=1, FUN=indiv_prs, beta=bg_sel)
@@ -205,8 +171,6 @@ pop2_prs <- apply(geno2, MARGIN=1, FUN=indiv_prs, beta=bg_sel)
 prs.mean = mean(c(pop1_prs, pop2_prs))
 prs.diff = mean(pop1_prs) - mean(pop2_prs) # mean prs difference
 meta_prs = c(pop1_prs, pop2_prs) #check if this equals to t=0 adm_prs
-#write.table(meta_prs, file = paste0("metaprs", "_seed", seed, "_P", P, ".txt"), 
-#              quote=FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
 vtotal.obs = pvar(meta_prs)
 
 # calculate variance within each groups
@@ -217,8 +181,8 @@ vwithin.obs = (g1.var + g2.var)/2
 vbetween.obs = ((mean(pop1_prs) - prs.mean)^2 + (mean(pop2_prs) - prs.mean)^2)/2
 
 ################### simulate admixed population under assortative mating + HI/CGF ########################
+
 print("simulate admixed population")
-# output lanc of each generation
 
 # inital number of indvidual from each parental groups
 nindiv_pop1 = round(n*pi)
@@ -226,10 +190,10 @@ nindiv_pop2 = n - nindiv_pop1
 
 # simulate global ancestry of parental meta groups of each generation
 ganc_meta = matrix(NA, nrow = t+1, ncol = n)
-ganc_meta[1,] = c(rep(1, nindiv_pop1), rep(0, nindiv_pop2)) 
+ganc_meta[1,] = c(rep(1, nindiv_pop1), rep(0, nindiv_pop2)) #t=0
+
 # get parental global ancestry combination and calculate the ganc of admix pop
-#corrthresh = 0.01 #correlation threshold
-corrthresh = 0.01
+corrthresh = 0.01 #correlation threshold
 set.seed(seed3) # so we have different var.theta
 for (i in 1:t){ #generation of admixture
   print(paste0("finding mating pairs for generation ", i))
@@ -241,9 +205,7 @@ for (i in 1:t){ #generation of admixture
   # search for mate pairs to meet the P
   while(abs(c-P) > corrthresh){
     iter = iter + 1
-    #s = (u+l)/2
-    s = (u+l)/2 #for P=0.6 seed1
-    #print(sprintf('c = %f s = %f P = %f iter = %d', c, s, P, iter))
+    s = (u+l)/2 
     #sort the score and get the index of the sorted list
     idxm = sort(ganc_meta[i,]  + rnorm(n, 0, 1)*s, index.return=TRUE)$ix 
     idxf = sort(ganc_meta[i,]  + rnorm(n, 0, 1)*s, index.return=TRUE)$ix
@@ -257,12 +219,11 @@ for (i in 1:t){ #generation of admixture
         }
   }
   
-  # ganc with migration
-  # indidivual to be replaced
+  # gene flow since admixture event
   set.seed(seed3*3)
   migration1 = sample(1:n, size=round((m1+m2)*n), replace=F) 
   # CGF or HI
-  if(m1+m2>0){ # confinuous geneflow
+  if(m1+m2>0){ # confinuous gene flow
     migration2 = sample(migration1, size=round(m1*length(migration1)/(m1+m2)), replace=F)
     # get index of replaced ind of pop1
   }
@@ -285,10 +246,9 @@ for (i in 1:t){ #generation of admixture
   ganc_meta[i+1,] = globalanc
 }
 
-
-# simulate admixed pop lanc from ganc
+# simulate admixed pop local ancestry from given global ancestry
 # update filename with seed
-dirname <- paste0("../data/theta", theta, "_gen", t, "/summary", "/", model, "/")
+dirname <- paste0("../data/theta", theta, "_gen", t, "/summary", "/", model, "/") # directory, can be modified 
 filename <- paste0("admix_", model,"_theta", theta, "_gen", t, "_P", P, "_", cov, "_seed", seed)
 # record summary stat of each generation
 output = matrix(NA, nrow = t+1, ncol = 17)
@@ -304,12 +264,12 @@ for (i in 1:(t+1)){
   lanc_p <- matrix(rbinom(n*nloci, 1, ganc), nrow=n, ncol=nloci)
   lanc_m <- matrix(rbinom(n*nloci, 1, ganc), nrow=n, ncol=nloci)
   lanc_adm <- lanc_p + lanc_m 
-  #admixed pop genotype 
+  # admixed pop genotype 
   geno_adm <- t(sapply(c(1:n), FUN=LAnc2Geno, lanc_p=lanc_p, lanc_m=lanc_m, frq_pop1=f1, frq_pop2=f2))
   # theta: global ancestry of each individual
-  #admixed pop global ancestry calculated by lanc
+  # admixed pop global ancestry calculated by lanc
   ganc_adm <- apply(lanc_adm, 1, sum)/(2*nloci) #1 cause sum by row-ind
-  #dim(lanc_adm) #10000  1000
+  # dim(lanc_adm) #10000  1000
   # record theta at each generation, this theta is calculated from lanc
   mean.theta <- mean(ganc_adm)
   var.theta <- pvar(ganc_adm)
@@ -368,11 +328,13 @@ for (i in 1:(t+1)){
   output[i, 17] <- cor.ganc.pheno
   
   # output PLINK files: dosage, fam, pheno, covar (global ancestry)
-  #plinkname <- paste0(filename, "_t", i-1) #for filename
-  #plinkname_lanc <- paste0(filename, "_t", i-1, "_lanc")
-  # check the genotype output
-  #Geno2Plink(geno_adm, nloci, n, plinkname, FID="ADM", prs_geno, pheno, ganc_adm) #prs_geno as pheno output
-  #Geno2Plink(lanc_adm, nloci, n, plinkname_lanc, FID="ADM", prs_lanc, pheno, ganc_adm) #prs_lanc as pheno output
+  # required for the input to carry out GREML estimate in the next step
+    plinkname <- paste0(filename, "_t", i-1) #for filename
+    plinkname_lanc <- paste0(filename, "_t", i-1, "_lanc")
+    # genotype output
+    Geno2Plink(geno_adm, nloci, n, plinkname, FID="ADM", prs_geno, pheno, ganc_adm) #prs_geno as pheno output
+    # local ancestry output
+    Geno2Plink(lanc_adm, nloci, n, plinkname_lanc, FID="ADM", prs_lanc, pheno, ganc_adm) #prs_lanc as pheno output
 }
 
 
