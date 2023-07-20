@@ -1,4 +1,4 @@
-## Plot
+## Plotting scripts for manuscript
 
 * Fig2: ${\theta}$: ```Rscript plot_theta.R ```
 
