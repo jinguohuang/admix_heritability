@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # calculate GRM scaled by Var(X) instead of 2P(1-P) as GCTA did
-# output GRM to feed GCTA to see if it give us 2.1+2.2+2.3
+# output GRM to feed GCTA to see if it give us 1.1+1.2+1.3
 
 
 library(data.table)
