@@ -49,12 +49,12 @@ fig4A=function(data, yobs, title, legend.position="right"){
 }
 
 
-# standard scale gcta vgamma vs expected (1.2)+(1.3)
+# standard scale gcta vgamma vs expected (1.2)
 fig4B=function(data, yobs, legend.position="right"){
   library(ggplot2)
   ggplot() +
     geom_line(data=data, linewidth=0.9, color="black", 
-              aes(x=t, y = va.term2+va.term3,
+              aes(x=t, y = va.term2,
                   linetype = "exp",
                   group=interaction(P, cov)
               )) + 
@@ -68,7 +68,7 @@ fig4B=function(data, yobs, legend.position="right"){
                           breaks = c("obs",   "exp"),
                           values = c("solid",  "11"),
                           labels = c("Estimated\n(standard)",
-                                     "(1.2)+(1.3)")) + 
+                                     "(1.2)")) + 
     scale_colour_manual("", 
                         values = c('#92c5de','#053061',
                                    '#f4a582','#67001f') ,
