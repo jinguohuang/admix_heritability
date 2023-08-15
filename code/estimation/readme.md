@@ -7,5 +7,8 @@
 
 * Script: **GRMvarX.R**
 * Usage: ```Rscript GRMvarX.R ${filename} ${plinkdir} ${grmdir}```
-* Example: To feed GCTA with GRM with updated scaling instead of the standard scaling of GREML 2f(1-f), substitute this line with command to construct grm with gcta in **vg_GCTA.sh**
+* Example: To feed GCTA with GRM with updated scaling: variance of genotype, instead of the standard scaling of GREML 2f(1-f), substitute this line with command to construct grm with gcta in **vg_GCTA.sh**
   
+* Script: **GRMld.R**
+* Usage: ```Rscript GRMld.R ${filename} ${plinkdir} ${grmdir}```
+* Example: To feed GCTA with GRM with updated scaling: LD matrix, instead of the standard scaling of GREML 2f(1-f), substitute this line with command to construct grm with gcta in **vg_GCTA.sh**
