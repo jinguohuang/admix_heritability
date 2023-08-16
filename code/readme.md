@@ -7,3 +7,5 @@
 - [**empirical**](https://github.com/jinguohuang/admix_heritability/tree/master/code/empirical) Decomposing ${V}_g$ in traits in African Americans
 
 - [**plot**](https://github.com/jinguohuang/admix_heritability/tree/master/code/plot) Plotting scripts for manuscript
+
+- [**data**](https://github.com/jinguohuang/admix_heritability/tree/master/code/data) Summary data for generating plots for manuscript
