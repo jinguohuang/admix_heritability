@@ -51,6 +51,13 @@
   | _.prs_ | Genetic value or PRS |
   | _.ganc_ | Global ancestry of individuals |
 
-* To replicate the experiments in the paper,
+* To replicate the experiments in this paper, submit jobs with the script **sim_admix.slurm** to your computing cluster as follows. Our job scheduler is Slurm, if you use PBS, you can convert it with this [cheatsheet](https://www.msi.umn.edu/slurm/pbs-conversion).
+  ```
+  # HI
+  for s in {1..10}; do for i in 0.1 0.2 0.5; do for j in 0 0.3 0.6 0.9; do for k in pos neg; do for g in 100; do sbatch sim_admix.slurm HI $i $g $j $k $s; done; done; done; done; done
+  # CGF
+  for s in {1..10}; do for i in 0.1 0.2 0.5; do for j in 0 0.3 0.6 0.9; do for k in pos neg; do for g in 10 20 50 100; do sbatch sim_admix.slurm CGF $i $g $j $k $s; done; done; done; done; done
+  ```
+
 
   
