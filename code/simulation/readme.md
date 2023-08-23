@@ -41,7 +41,16 @@
   | _cov.ganc.prsgeno, cor.ganc.prsgeno_ | Covariance, correlation of ancestry and PRS|
   | _cov.ganc.prslanc, cor.ganc.prslanc_ | Covariance, correlation of ancestry and PRS due to local ancestry |
   | _cov.ganc.pheno, cor.ganc.pheno_ | Covariance, correlation of ancestry and phenotype |
-  
+  | _theta_ | Proportion of total admixture proportion ${\theta}$|
+  | _P_ | Strength of ancestry-based assortative mating |
+  | _seed_ | Random seed for replication |
+  | _vbetween.genic_ | The genic genetic variance between source populations |
+  | _vbetween.obs_ | The genetic variance between source populations calculated with genetic values |
+  | _cov_ | Sign of the LD contribution of two simulated trait architectures |
+  | _model_ | Admixture model used: hybrid isolation (HI) or continuous gene flow (CGF) |
+  | _m1_ | Migration rate at each generation for CGF model |
+  | _prs.diff_ | Mean PRS difference in source populations |
+
 * Output (optional, required files for GREML estimation): output genotype/local ancestry, PRS, phenotype to PLINK format.
   | File extension | Description  
   | :---: | :---  |
