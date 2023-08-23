@@ -194,6 +194,9 @@ ganc_meta[1,] = c(rep(1, nindiv_pop1), rep(0, nindiv_pop2)) #t=0
 
 # get parental global ancestry combination and calculate the ganc of admix pop
 corrthresh = 0.01 #correlation threshold
+# This block of finding mating pairs is usually pretty fast, or it cannot be reached 
+# The threshold might need to be relaxed up to 0.04, or it will be too stringent to find possible mating pairs 
+# especially for situations under theta=0.1, 0.2 t>=50 and especially for P=0.6
 set.seed(seed3) # so we have different var.theta
 for (i in 1:t){ #generation of admixture
   print(paste0("finding mating pairs for generation ", i))
