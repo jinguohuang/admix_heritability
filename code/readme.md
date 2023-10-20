@@ -9,3 +9,5 @@
 - [**plot**](https://github.com/jinguohuang/admix_heritability/tree/master/code/plot) Plotting scripts for manuscript
 
 - [**data**](https://github.com/jinguohuang/admix_heritability/tree/master/code/data) Summary data for generating plots for manuscript
+
+- [**figs**](https://github.com/jinguohuang/admix_heritability/tree/master/code/figs) Main figures of the manuscript
