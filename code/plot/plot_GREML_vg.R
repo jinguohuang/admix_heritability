@@ -19,7 +19,7 @@ integer_breaks <- function(n = 5, ...) {
 
 
 # plot gcta estimate and expected 
-fig4A=function(data, yobs, yexp, ylab, title, legend.position="right"){
+fig4A=function(data, yobs, yexp, ylab, legend.position="right"){
   library(ggplot2)
   ggplot() +
   geom_line(data=data, linewidth=0.9, alpha = 0.65, #transparent this line
@@ -37,7 +37,8 @@ fig4A=function(data, yobs, yexp, ylab, title, legend.position="right"){
                        breaks = c("obs",   "exp"),
                        values = c("solid",  "11"),
                        labels = c("Estimated\n(standard)",
-                                  "Expected")) +
+                                  expression(V[g])
+                                  )) +
   scale_colour_manual("", 
                       values = c('#92c5de','#053061',
                                  '#f4a582','#67001f') ,
@@ -47,7 +48,6 @@ fig4A=function(data, yobs, yexp, ylab, title, legend.position="right"){
   theme_classic() +
   xlab("t") +
   ylab(ylab)  + 
-  ggtitle(title) +
   theme(aspect.ratio = 1, 
         plot.title = element_text(hjust = 0.5), # to center the title
         legend.position = legend.position, 
@@ -56,35 +56,34 @@ fig4A=function(data, yobs, yexp, ylab, title, legend.position="right"){
         plot.margin = unit(c(0, 0, 0, 0), 'cm')
         ) + 
   guides(color = "none", # no show color legend
-         linetype = guide_legend(order = 2, reverse = T)
+          linetype = guide_legend(order = 2, reverse = T)
          )
 }
+
 
 HIa_wo=fig4A(data=df_HI, 
           yobs = df_HI$vg_gcta, 
           yexp = df_HI$exp.vg,
-          ylab = expression(hat(V)[g]),
-          title="Hybrid Isolation", 
+          ylab = expression(hat(sigma)[u]^2),
           legend.position = "none") 
 
 CGFa_wo=fig4A(data=df_CGF, 
            yobs = df_CGF$vg_gcta, 
            yexp = df_CGF$exp.vg,
-           ylab = expression(hat(V)[g]),
-           title="Continuous Gene Flow") 
+           ylab = expression(hat(sigma)[u]^2),
+          legend.position = "right") 
 
 HIa_wganc=fig4A(data=df_HI, 
           yobs = df_HI$vg_gcta_wganc, 
           yexp = df_HI$exp.vg,
-          title="Hybrid Isolation",
-          ylab = expression(hat(V)[g]),
+          ylab = expression(hat(sigma)[u]^2),
           legend.position = "none") 
  
 CGFa_wganc=fig4A(data=df_CGF, 
            yobs = df_CGF$vg_gcta_wganc, 
            yexp = df_CGF$exp.vg,
-           ylab = expression(hat(V)[g]),
-           title="Continuous Gene Flow") 
+           ylab = expression(hat(sigma)[u]^2),
+          legend.position = "right") 
 
 fig4B=function(data, yobs, legend.position="right"){
 library(ggplot2)
@@ -114,8 +113,7 @@ ggplot() +
                                  )) +
   theme_classic() +
   xlab("t") +
-  ylab(expression(hat(V)[g]))  + 
- # ggtitle("Continuous Gene Flow") + #no title 
+  ylab(expression(hat(sigma)[u]^2))  + 
   theme(aspect.ratio = 1, 
         plot.title = element_text(hjust = 0.5), # to center the title
         legend.position = legend.position, 
@@ -131,13 +129,16 @@ HIb_wo=fig4B(data=df_HI,
              legend.position = "none")
 
 CGFb_wo=fig4B(data=df_CGF, 
-              yobs=df_CGF$vg_gcta)
+              yobs=df_CGF$vg_gcta,
+          legend.position = "right")
 
 HIb_wganc=fig4B(data=df_HI,
                 yobs = df_HI$vg_gcta_wganc, 
                 legend.position = "none")
 CGFb_wganc=fig4B(data=df_CGF, 
-                 yobs = df_CGF$vg_gcta_wganc,)
+                 yobs = df_CGF$vg_gcta_wganc,
+          legend.position = "right")
+
 
 fig4C=function(data, yobs, legend.position="right", y0.9=1.05){
   library(ggplot2)
@@ -160,7 +161,7 @@ fig4C=function(data, yobs, legend.position="right", y0.9=1.05){
   scale_linetype_manual("", 
                        breaks = c("obs",   "exp"),
                        values = c("solid",  "11"),
-                       labels = c("Estimated\n(adjusted)",
+                       labels = c("Estimated\n(V(x) scaled)",
                                   "(1.1)+(1.2)\n+(1.3)")) +
   scale_colour_manual("", 
                       values = c('#92c5de','#053061',
@@ -170,8 +171,7 @@ fig4C=function(data, yobs, legend.position="right", y0.9=1.05){
                                  )) +
   theme_classic() +
   xlab("t") +
-  ylab(expression(hat(V)[g]))  + 
-  #ggtitle(title) +
+  ylab(expression(hat(sigma)[u]^2))  + 
   theme(aspect.ratio = 1, 
         plot.title = element_text(hjust = 0.5), # to center the title
         legend.position = legend.position, 
@@ -180,8 +180,7 @@ fig4C=function(data, yobs, legend.position="right", y0.9=1.05){
         plot.margin = unit(c(0, 0, 0, 0), 'cm')
         ) + 
   guides(color = "none", # no show color legend
-          linetype = guide_legend(order = 2, reverse = T#, 
-                             # override.aes = list(size = 0.5)
+          linetype = guide_legend(order = 2, reverse = T
                               ) )
 }
 
@@ -191,14 +190,131 @@ HIc_wo=fig4C(data=df_HI,
           legend.position = "none")
 CGFc_wo=fig4C(data=df_CGF,
            yobs = df_CGF$vg_GRMvarX,
-           y0.9 = 1.06)
+           y0.9 = 1.06,
+          legend.position = "right")
 
 HIc_wganc=fig4C(data=df_HI, 
           yobs = df_HI$vg_GRMvarX_ganc,
           legend.position = "none")
 CGFc_wganc=fig4C(data=df_CGF,
            yobs = df_CGF$vg_GRMvarX_ganc,
-           y0.9 = 1.06)
+           y0.9 = 1.06,
+          legend.position = "right")
+
+
+# LD matrix scaled results panel D
+fig4D=function(data, yobs, yexp, ylab, legend.position="right"){
+  library(ggplot2)
+  ggplot() +
+  geom_line(data=data, linewidth=0.9, alpha = 0.65, #transparent this line
+            aes(x=t, y = yobs,                               
+                linetype = "obs",
+                group=interaction(P, cov), 
+                color=interaction(P, cov))) +
+  geom_line(data=data, linewidth=0.9, 
+            aes(x=t, y = yexp, 
+                linetype = "exp",
+                group=interaction(P, cov),
+                color=interaction(P, cov))) +
+  scale_y_log10(limits=c(0.9, 2.1)) +
+  scale_linetype_manual("", 
+                       breaks = c("obs",   "exp"),
+                       values = c("solid",  "11"),
+                       labels = c("Estimated\n(LD scaled)",
+                                  #"Expected"
+                                  expression(V[g])
+                                  )) +
+  scale_colour_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                      labels = c("P=0", "P=0.9", 
+                                 "P=0", "P=0.9"
+                                 )) +
+  theme_classic() +
+  xlab("t") +
+  ylab(ylab)  + 
+  theme(aspect.ratio = 1, 
+        plot.title = element_text(hjust = 0.5), # to center the title
+        legend.position = legend.position, 
+        legend.text.align = 0, #left align legend
+        text = element_text(size = 12),
+        plot.margin = unit(c(0, 0, 0, 0), 'cm')
+        ) + 
+  guides(color = "none", # no show color legend
+          linetype = guide_legend(order = 2, reverse = T) 
+         )
+}
+
+
+
+HId_wo=fig4D(data=df_HI, 
+          yobs = df_HI$vg_GRMld, 
+          yexp = df_HI$exp.vg,
+          ylab = expression(hat(sigma)[u]^2),
+          legend.position = "none") 
+
+CGFd_wo=fig4D(data=df_CGF, 
+           yobs = df_CGF$vg_GRMld, 
+           yexp = df_CGF$exp.vg,
+           ylab = expression(hat(sigma)[u]^2),
+          legend.position = "right") 
+
+fig4D_w=function(data, yobs, yexp, ylab, legend.position="right", y0.9=0.93){
+  library(ggplot2)
+  ggplot() +
+  geom_line(data=data, linewidth=0.9, color="black", 
+            aes(x=t, y = yexp, 
+                linetype = "exp",
+                group=interaction(P, cov))) +
+    
+  geom_line(data=data, linewidth=0.9, alpha = 0.65, #transparent this line
+            aes(x=t, y = yobs,                               
+                linetype = "obs",
+                group=interaction(P, cov), 
+                color=interaction(P, cov))) +
+  
+    annotate(geom = "text", x=16, y=y0.9, label="P=0.9") +
+    annotate(geom = "text", x=16, y=1.03, label="P=0") +
+  scale_y_log10(limits=c(0.9, 1.1)) +
+  scale_linetype_manual("", 
+                       breaks = c("obs",   "exp"),
+                       values = c("solid",  "11"),
+                       labels = c("Estimated\n(LD scaled)",
+                                  "(1.1)+(1.2)\n-(1.3)")) +
+  scale_colour_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                     labels = c("P=0", "P=0.9", 
+                                "P=0", "P=0.9"
+                                 )) +
+  theme_classic() +
+  xlab("t") +
+  ylab(ylab)  + 
+  #ggtitle(title) +
+  theme(aspect.ratio = 1, 
+        plot.title = element_text(hjust = 0.5), # to center the title
+        legend.position = legend.position, 
+        legend.text.align = 0, #left align legend
+        text = element_text(size = 12),
+        plot.margin = unit(c(0, 0, 0, 0), 'cm')
+        ) + 
+  guides(color = "none", # no show color legend
+          linetype = guide_legend(order = 2, reverse = T)#, 
+         )
+}
+HId_wganc=fig4D_w(data=df_HI, 
+          yobs = df_HI$vg_GRMld_ganc, 
+          yexp = df_HI$va.term1 + df_HI$va.term2 - df_HI$va.term3, # not this
+          #title="Hybrid Isolation wganc",
+          ylab = expression(hat(sigma)[u]^2),
+          legend.position = "none", y0.9=0.95) 
+ 
+CGFd_wganc=fig4D_w(data=df_CGF, 
+           yobs = df_CGF$vg_GRMld_ganc, 
+           yexp = df_CGF$va.term1 + df_CGF$va.term2 - df_CGF$va.term3, 
+           ylab = expression(hat(sigma)[u]^2),
+          legend.position = "right") 
+
 
 #color legend only
 fig4color=function(data){
@@ -239,33 +355,35 @@ ggplot() +
           linetype = "none" 
          )}
 HI_color=fig4color(df_HI)
-HI_color
 
 
-# GREML Vg wo
+
+# GREML Vg wo and wganc
 library(ggpubr)
-plt=ggarrange(HIa_wo, CGFa_wo, HIb_wo, CGFb_wo, HIc_wo, CGFc_wo, 
-              ncol = 2, nrow = 3, 
-              labels = c("A", "", "B", "","C", ""),
-              align = c("h")) %>% # to move the legend closer 
-  gridExtra::grid.arrange(get_legend(HI_color), 
-                          heights = unit(c(8, 0.8), "in")
-                          )   
-ggsave("../figs/GREML_vg.png", plot=plt,
-       width = 9, height = 9, dpi = 300, units = "in", device='png')
+plt_wo=ggarrange(HIa_wo, CGFa_wo, 
+              HIb_wo, CGFb_wo, 
+              HIc_wo, CGFc_wo, 
+              HId_wo, CGFd_wo,
+              ncol = 2, nrow = 4, 
+              labels = c("A", "", "B", "","C", "","D", ""),
+              align = c("h"))
 
-
-
-# GREML Vg wganc
-library(ggpubr)
-plt=ggarrange(HIa_wganc, CGFa_wganc, 
+plt_wganc=ggarrange(HIa_wganc, CGFa_wganc, 
               HIb_wganc, CGFb_wganc, 
               HIc_wganc, CGFc_wganc, 
-              ncol = 2, nrow = 3, 
-              labels = c("A", "", "B", "","C", ""),
-              align = c("h")) %>% # to move the legend closer 
+              HId_wganc, CGFd_wganc,
+              ncol = 2, nrow = 4, 
+              labels = c("E", "", "F", "","G", "","H", ""),
+              align = c("h"))
+
+# add space between these two
+plt=ggarrange(plt_wo, '', plt_wganc, 
+              ncol = 3, nrow = 1, 
+              widths = c(8,1,8),
+              align = c("v")) %>% # to move the legend closer 
   gridExtra::grid.arrange(get_legend(HI_color), 
-                          heights = unit(c(8, 0.8), "in")
+                          heights = unit(c(9, 0.8), "in")
                           ) 
-ggsave("../figs/GREML_vg_wganc.png", plot=plt,
-       width = 9, height = 9, dpi = 300, units = "in", device='png')
+
+ggsave("../figs/GREML_vg_wowganc.png", plot=plt,
+       width = 16, height = 10, dpi = 300, units = "in", device='png')
