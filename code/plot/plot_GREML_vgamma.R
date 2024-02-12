@@ -2,14 +2,19 @@
 
 # load files
 library(data.table)
-df_HI=fread("../data/admix_HI_GREML_vgamma.txt", header = T)
-df_CGF=fread("../data/admix_CGF_GREML_vgamma.txt", header = T)
+df_HI=fread("../data/admix_HI_GREML_vgamma_CI_exp.txt", header = T)
+df_CGF=fread("../data/admix_CGF_GREML_vgamma_CI_exp.txt", header = T)
 
 # function to plot 
 # expectation VS standard scaled GCTA results
-fig4A=function(data, yobs, legend.position="right"){
+fig4A=function(data, yobs, CIl, CIr, legend.position="right"){
   library(ggplot2)
   ggplot() +
+    geom_ribbon(data=data, alpha=0.2, linetype = 0, #remove the boarder
+              aes(x=t, 
+                  ymin = CIl, ymax = CIr,
+                  group=interaction(P, cov),
+                fill=interaction(P, cov))) +
     geom_line(data=data, linewidth=0.9, alpha = 0.65, #transparent this line
               aes(x=t, y = yobs,                               
                   linetype = "obs",
@@ -32,6 +37,12 @@ fig4A=function(data, yobs, legend.position="right"){
                         labels = c("P=0", "P=0.9", 
                                    "P=0", "P=0.9"
                         )) +
+    scale_fill_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                      labels = c("P=0", "P=0.9", 
+                                 "P=0", "P=0.9"
+                                 )) +
     theme_classic() +
     xlab("t") +
     ylab(expression(hat(sigma)[v]^2))  + 
@@ -43,16 +54,21 @@ fig4A=function(data, yobs, legend.position="right"){
           text = element_text(size = 12),
           plot.margin = unit(c(0, 0, 0, 0), 'cm')
     ) + 
-    guides(color = "none", # no show color legend
+    guides(color = "none", fill = "none",# no show color legend
            linetype = guide_legend(order = 2, reverse = T)
     )
 }
 
 
 # standard scale gcta vgamma vs expected (1.2)+(1.3)
-fig4B=function(data, yobs, legend.position="right"){
+fig4B=function(data, yobs, CIl, CIr, legend.position="right"){
   library(ggplot2)
   ggplot() +
+    geom_ribbon(data=data, alpha=0.2, linetype = 0,
+              aes(x=t, 
+                  ymin = CIl, ymax = CIr,
+                  group=interaction(P, cov),
+                fill=interaction(P, cov))) +
     geom_line(data=data, linewidth=0.9, color="black", 
               aes(x=t, y = va.term2,
                   linetype = "exp",
@@ -75,6 +91,12 @@ fig4B=function(data, yobs, legend.position="right"){
                         labels = c("P=0", "P=0.9", 
                                    "P=0", "P=0.9"
                         )) +
+    scale_fill_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                      labels = c("P=0", "P=0.9", 
+                                 "P=0", "P=0.9"
+                                 )) +
     theme_classic() +
     xlab("t") +
     ylab(expression(hat(sigma)[v]^2))  + 
@@ -85,16 +107,21 @@ fig4B=function(data, yobs, legend.position="right"){
           text = element_text(size = 12),
           plot.margin = unit(c(0, 0, 0, 0), 'cm')
     ) + 
-    guides(color = "none", 
+    guides(color = "none", fill = "none",
            linetype = guide_legend(order = 1, reverse = T
            ) )}
 
 
 # (1.2)+(1.3) vs GRMvarX scaled vgamma gcta estimates
 
-fig4C=function(data, yobs, legend.position="right"){
+fig4C=function(data, yobs, CIl, CIr, legend.position="right"){
   library(ggplot2)
   ggplot() +
+    geom_ribbon(data=data, alpha=0.2, linetype = 0,
+              aes(x=t, 
+                  ymin = CIl, ymax = CIr,
+                  group=interaction(P, cov),
+                fill=interaction(P, cov))) +
     geom_line(data=data, linewidth=0.9, color="black", 
               aes(x=t, y = va.term2+va.term3, 
                   linetype = "exp",
@@ -121,6 +148,13 @@ fig4C=function(data, yobs, legend.position="right"){
                         labels = c("P=0", "P=0.9", 
                                    "P=0", "P=0.9"
                         )) +
+    scale_fill_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                      labels = c("P=0", "P=0.9", 
+                                 "P=0", "P=0.9"
+                                 )) +
+
     theme_classic() +
     xlab("t") +
     ylab(expression(hat(sigma)[v]^2))  + 
@@ -131,15 +165,20 @@ fig4C=function(data, yobs, legend.position="right"){
           text = element_text(size = 12),
           plot.margin = unit(c(0, 0, 0, 0), 'cm')
     ) + 
-    guides(color = "none", # no show color legend
+    guides(color = "none", fill = "none",# no show color legend
            linetype = guide_legend(order = 2, reverse = T
            ) )
 }
 
 
-fig4D=function(data, yobs, legend.position="right"){
+fig4D=function(data, yobs, CIl, CIr, legend.position="right"){
   library(ggplot2)
   ggplot() +
+    geom_ribbon(data=data, alpha=0.2, linetype = 0,
+            aes(x=t, 
+                ymin = CIl, ymax = CIr,
+                group=interaction(P, cov),
+              fill=interaction(P, cov))) +
     geom_line(data=data, linewidth=0.9, 
             aes(x=t, y = va.term2+va.term3+va.term4, 
                 linetype = "exp",
@@ -161,6 +200,12 @@ fig4D=function(data, yobs, legend.position="right"){
                      values = c('#92c5de','#053061',
                                 '#f4a582','#67001f'),
   ) +
+  scale_fill_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                      labels = c("P=0", "P=0.9", 
+                                 "P=0", "P=0.9"
+                                 )) +
   theme_classic() +
   xlab("t") +
   ylab(expression(hat(sigma)[v]^2))  + 
@@ -171,16 +216,21 @@ fig4D=function(data, yobs, legend.position="right"){
         text = element_text(size = 12),
         plot.margin = unit(c(0, 0, 0, 0), 'cm')
         ) + 
-  guides(color = "none", # no show color legend
+  guides(color = "none", fill = "none",# no show color legend
           linetype = guide_legend(order = 2, reverse = T)
          )
 }
 
 
-fig4D_w=function(data, yobs, legend.position="right"){
+fig4D_w=function(data, yobs, CIl, CIr, legend.position="right"){
   library(ggplot2)
   ggplot() +
-    geom_line(data=data, linewidth=0.9, #color="black",
+  geom_ribbon(data=data, alpha=0.2, linetype = 0,
+            aes(x=t, 
+                ymin = CIl, ymax = CIr,
+                group=interaction(P, cov),
+              fill=interaction(P, cov))) +
+  geom_line(data=data, linewidth=0.9, #color="black",
             aes(x=t, y = va.term2-va.term3, 
                 linetype = "exp",
                 group=interaction(P, cov),
@@ -211,6 +261,12 @@ fig4D_w=function(data, yobs, legend.position="right"){
                      values = c('#92c5de','#053061',
                                 '#f4a582','#67001f'),
   ) +
+  scale_fill_manual("", 
+                      values = c('#92c5de','#053061',
+                                 '#f4a582','#67001f') ,
+                      labels = c("P=0", "P=0.9", 
+                                 "P=0", "P=0.9"
+                                 )) +
   theme_classic() +
   xlab("t") +
   ylab(expression(hat(sigma)[v]^2))  + 
@@ -221,7 +277,7 @@ fig4D_w=function(data, yobs, legend.position="right"){
         text = element_text(size = 12),
         plot.margin = unit(c(0, 0, 0, 0), 'cm')
         ) + 
-  guides(color = "none", 
+  guides(color = "none", fill = "none",
           linetype = guide_legend(order = 2, reverse = T)
          )
 }
@@ -232,7 +288,7 @@ fig4color=function(data){
   library(ggplot2)
   ggplot() +
     geom_line(data=data, linewidth=0.9, alpha = 0.65, #transparent this line
-              aes(x=t, y = vgamma_GRMstd,                               
+              aes(x=t, y = vgamma_GRMstd_mean,                               
                   linetype = "obs",
                   group=interaction(P, cov), 
                   color=interaction(P, cov))) +
@@ -270,31 +326,47 @@ HI_color=fig4color(data=df_HI)
 
 
 HIa=fig4A(data=df_HI, 
-          yobs=df_HI$vgamma_GRMstd, 
+          yobs=df_HI$vgamma_GRMstd_mean, 
+          CIl = df_HI$vgamma_GRMstd_CIl,
+          CIr = df_HI$vgamma_GRMstd_CIr,
           #title="Hybrid Isolation", 
           legend.position = "none")
 CGFa=fig4A(data=df_CGF, 
-           yobs=df_CGF$vgamma_GRMstd) 
+          yobs=df_CGF$vgamma_GRMstd_mean, 
+          CIl = df_CGF$vgamma_GRMstd_CIl,
+          CIr = df_CGF$vgamma_GRMstd_CIr) 
            #title="Continuous Gene Flow")
 
 HIb=fig4B(data=df_HI,
-          yobs=df_HI$vgamma_GRMstd,
+          yobs=df_HI$vgamma_GRMstd_mean, 
+          CIl = df_HI$vgamma_GRMstd_CIl,
+          CIr = df_HI$vgamma_GRMstd_CIr,
           legend.position = "none")
 
 CGFb=fig4B(data=df_CGF,
-           yobs=df_CGF$vgamma_GRMstd)
+          yobs=df_CGF$vgamma_GRMstd_mean, 
+          CIl = df_CGF$vgamma_GRMstd_CIl,
+          CIr = df_CGF$vgamma_GRMstd_CIr) 
 
 HIc=fig4C(data=df_HI, 
-          yobs=df_HI$vgamma_GRMvarX,
+          yobs=df_HI$vgamma_GRMvarX_mean, 
+          CIl = df_HI$vgamma_GRMvarX_CIl,
+          CIr = df_HI$vgamma_GRMvarX_CIr,
           legend.position = "none")
 CGFc=fig4C(data=df_CGF,
-           yobs=df_CGF$vgamma_GRMvarX)
+          yobs=df_CGF$vgamma_GRMvarX_mean, 
+          CIl = df_CGF$vgamma_GRMvarX_CIl,
+          CIr = df_CGF$vgamma_GRMvarX_CIr)
 
 HId=fig4D(data=df_HI, 
-          yobs=df_HI$vgamma_GRMld,
+          yobs=df_HI$vgamma_GRMld_mean, 
+          CIl = df_HI$vgamma_GRMld_CIl,
+          CIr = df_HI$vgamma_GRMld_CIr,
           legend.position = "none")
 CGFd=fig4D(data=df_CGF,
-           yobs=df_CGF$vgamma_GRMld)
+          yobs=df_CGF$vgamma_GRMld_mean, 
+          CIl = df_CGF$vgamma_GRMld_CIl,
+          CIr = df_CGF$vgamma_GRMld_CIr,)
 
 library(ggpubr)
 plt_wo=ggarrange(HIa, CGFa, HIb, CGFb, HIc, CGFc, HId, CGFd,
@@ -304,30 +376,46 @@ plt_wo=ggarrange(HIa, CGFa, HIb, CGFb, HIc, CGFc, HId, CGFd,
 
 # plot for gcta_wganc
 HIa_w=fig4A(data=df_HI, 
-            yobs = df_HI$vgamma_GRMstd_ganc,
+            yobs = df_HI$vgamma_GRMstd_ganc_mean,
+            CIl = df_HI$vgamma_GRMstd_ganc_CIl,
+            CIr = df_HI$vgamma_GRMstd_ganc_CIr,
             #title="Hybrid Isolation", 
             legend.position = "none")
 CGFa_w=fig4A(data=df_CGF, 
-             yobs=df_CGF$vgamma_GRMstd_ganc)
+            yobs = df_CGF$vgamma_GRMstd_ganc_mean,
+            CIl = df_CGF$vgamma_GRMstd_ganc_CIl,
+            CIr = df_CGF$vgamma_GRMstd_ganc_CIr)
              #title="Continuous Gene Flow")
 
 HIb_w=fig4B(data=df_HI, 
-            yobs=df_HI$vgamma_GRMstd_ganc,
+            yobs = df_HI$vgamma_GRMstd_ganc_mean,
+            CIl = df_HI$vgamma_GRMstd_ganc_CIl,
+            CIr = df_HI$vgamma_GRMstd_ganc_CIr,
             legend.position = "none")
 CGFb_w=fig4B(data=df_CGF,
-             yobs=df_CGF$vgamma_GRMstd_ganc)
+            yobs = df_CGF$vgamma_GRMstd_ganc_mean,
+            CIl = df_CGF$vgamma_GRMstd_ganc_CIl,
+            CIr = df_CGF$vgamma_GRMstd_ganc_CIr)
 
-HIc_w=fig4C(data=df_HI,
-            yobs=df_HI$vgamma_GRMvarX_ganc,
+HIc_w=fig4C(data=df_HI, 
+            yobs = df_HI$vgamma_GRMvarX_ganc_mean,
+            CIl = df_HI$vgamma_GRMvarX_ganc_CIl,
+            CIr = df_HI$vgamma_GRMvarX_ganc_CIr,
             legend.position = "none")
 CGFc_w=fig4C(data=df_CGF,
-             yobs=df_CGF$vgamma_GRMvarX_ganc)
+            yobs = df_CGF$vgamma_GRMvarX_ganc_mean,
+            CIl = df_CGF$vgamma_GRMvarX_ganc_CIl,
+            CIr = df_CGF$vgamma_GRMvarX_ganc_CIr)
 
-HId_w=fig4D_w(data=df_HI,
-            yobs=df_HI$vgamma_GRMld_ganc,
+HId_w=fig4D_w(data=df_HI, 
+            yobs = df_HI$vgamma_GRMld_ganc_mean,
+            CIl = df_HI$vgamma_GRMld_ganc_CIl,
+            CIr = df_HI$vgamma_GRMld_ganc_CIr,
             legend.position = "none")
 CGFd_w=fig4D_w(data=df_CGF,
-             yobs=df_CGF$vgamma_GRMld_ganc)
+            yobs = df_CGF$vgamma_GRMld_ganc_mean,
+            CIl = df_CGF$vgamma_GRMld_ganc_CIl,
+            CIr = df_CGF$vgamma_GRMld_ganc_CIr)
 
 
 plt_wganc=ggarrange(HIa_w, CGFa_w, HIb_w, CGFb_w, HIc_w, CGFc_w, HId_w, CGFd_w, 
@@ -346,5 +434,5 @@ plt=ggarrange(plt_wo, '', plt_wganc,
                           heights = unit(c(9, 0.8), "in")
                           ) 
 
-ggsave("../figs/GREML_vgamma_wowganc.png", plot=plt,
+ggsave("../figs/GREML_vgamma_wowganc_CI.png", plot=plt,
        width = 16, height = 10, dpi = 300, units = "in", device='png')
