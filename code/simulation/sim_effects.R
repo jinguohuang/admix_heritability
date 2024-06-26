@@ -8,14 +8,15 @@ print("reading in raw genotypes")
 infile = args[1]
 iter = args[2]
 pop=args[3]
-outfile=args[4]
+nvariants=as.numeric(args[4])
+outfile=args[5]
 library(data.table)
 #infile = F(paste("data/",pop,"/1kg.",pop,".rmdup.thinned.", iter, ".raw", sep = ""))
 
 dat= fread(infile, header = TRUE)
 ninds = dim(dat)[1]
-nvariants = 1000
-mat = as.matrix(dat[,c(7:1006)])
+ncolumns = nvariants+6 
+mat = as.matrix(dat[,c(7:ncolumns)])
 
 freq = apply(mat, 2, mean)/2
 pvar = apply(mat, 2, var)
@@ -23,7 +24,7 @@ pvar = apply(mat, 2, var)
 print("assigning effect sizes")
 
 b = matrix(sapply(pvar, function(x){
-	rnorm(1, 0, sd = sqrt(1/(1000*x)))
+	rnorm(1, 0, sd = sqrt(1/(nvariants*x)))
 	}), nvariants, 1)
 
 # sum(b^2 * pvar)

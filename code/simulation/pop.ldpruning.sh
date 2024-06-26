@@ -22,13 +22,12 @@ pop=${2}
 
 # thin for LD
 plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup \
---indep-pairwise 100 10 0.5 \
+--indep-pairwise 100 10 0.1 \
 --out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr
---threads 2 \
 
 plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup \
 --extract ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.prune.in \
---make-pgen 
+--make-pgen \
 --out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr
 
 # variant thinning
@@ -40,5 +39,5 @@ plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup \
 # --out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned \
 
 # compute allele frequency
-# plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned \
-# --freq --out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.f \
+plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr \
+--freq --out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.f \

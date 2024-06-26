@@ -8,21 +8,22 @@ n=${3}
 
 #select a set of list of 1000 randomly chosen snps and output genotypes
 
-tail -n+2 ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.f.afreq | \
-shuf -n1000 > ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.${n}.${rep}.snplist
+tail -n+2 ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.f.afreq | \
+shuf -n${n} > ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.${n}.${rep}.snplist
 
-plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned \
---extract ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.${n}.${rep}.snplist \
+plink2 --pfile ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr \
+--extract ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.${n}.${rep}.snplist \
 --export A \
---out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.${n}.${rep}
+--out ~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.${n}.${rep}
 
 echo "outputting variance components"
 
 Rscript ~/projects/admix_heritability/code/simulation/sim_effects.R \
-~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.${n}.${rep}.raw \
+~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.${n}.${rep}.raw \
 ${rep} \
 ${pop} \
-~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.thinned.${n}.${rep}.vg
+${n} \
+~/projects/admix_heritability/data/${pop}/1kg.${pop}.rmdup.ldpr.${n}.${rep}.vg
 
 
 
