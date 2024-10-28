@@ -3,3 +3,4 @@ Archived
 data/*
 .Rproj.user
 output/
+*.log
