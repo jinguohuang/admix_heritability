@@ -12,9 +12,9 @@
 
 **HE regression with GCTA**
 * Requirement: PLINK 2.0, and GCTA version 1.94.1
-* Scripts: ** **, with scaled GRMs: **run_gcta_GRMld.slurm** and **run_gcta_GRMvarX.slurm**
+* Scripts: **gcta_HE.slurm**, with scaled GRMs: **run_gcta_GRMld.slurm** and **run_gcta_GRMvarX.slurm**
 * Usage:
-  * 
+  * **gcta_HE** `sbatch gcta_HE.slurm ${model} ${P} ${cov} ${seed} ${t}`
   * **GRMld:** `sbatch run_gcta_GRMld.slurm ${model} ${P} ${cov} ${seed} ${t}`
   * **GRMvarX:** `sbatch run_gcta_GRMvarX.slurm ${model} ${P} ${cov} ${seed} ${t}`
 * Example: `sbatch run_gcta_GRMld.slurm CGF 0.9 neg 10 20`
