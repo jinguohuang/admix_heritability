@@ -16,12 +16,19 @@ This repository contains codes used to carry out the analyses and create the mai
 * Example: To estimate the genetic variance of the complex trait in the admixed population at generation 10 simulated above using GREML implemented in GCTA: ```./vg_GCTA.sh HI 0.5 20 0.9 pos 1 10```
 * Output: genetic relationship matrix of the population, reml file of estimation results with and without global ancestry as covariate.
 
+## Estimating ${V}_g$ with HE regression 
+* Script: **AdjHE_residual_noa.slurm, AdjHE_residual.slurm, gcta_HE.slurm, run_gcta_GRMld.slurm, run_gcta_GRMvarX.slurm**
+* Requirement: R version 4.2.3, PLINK 2.0, and GCTA version 1.94.1
+* Usage: see README.md in [**HE_simulation**](https://github.com/jinguohuang/admix_heritability/tree/master/code/HE_simulation)
+* Example: To estimate the genetic variance of the complex trait in the admixed population at generation 10 simulated above using HE regression without ancestry as a covariate implemented in R: ```sbatch AdjHE_residual_noa.slurm HI 0 pos 1 0```
+* Output: .txt file of estimation results with global ancestry as covariate.
+
 ## Decomposing ${V}_g$ in traits in African Americans
-* Script: **LDclump_hg38.sh, Allelef1f2_hg38.sh, vgp_calculator.R, gvalue_hg38.sh**
+* Script: **LDclump_hg38.sh, Allelef1f2_hg38.sh, vgCI_estimate.R**
 * Requirement: R version 4.2.3, PLINK 1.9, PLINK 2.0
-* Usage: ```./LDclump_hg38.sh ${trait}```
-* Example: To process GWAS Catalog downloaded summary statistics for trait HDL: LD clumping, calculate allele frequency of associated SNPs in CEU and YRI, calculate the proportion of variance explained, calculate the variance of polygenic scores: ```LDclump_hg38.sh HDL```
-* Output: the proportion of variance explained for the trait ```(${trait}_vgp.txt)```, the variance and 95%CI of polygenic scores for the trait ```(${trait}_vgvalueCI.txt)```.
+* Usage: ```./LDclump_hg38.sh ${trait}``` and ```vgCI_estimate.R``` 
+* Example: To process GWAS Catalog downloaded summary statistics for trait HDL: LD clumping, calculate allele frequency of associated SNPs in CEU and YRI, calculate the proportion of variance explained: ```LDclump_hg38.sh HDL```, ```vgCI_estimate.R``` (input is Table S1) 
+* Output: the proportion of variance explained for the trait with 95% confidence intervals ```(vgpCI.txt)```.
 
 ## Plot
 
@@ -29,10 +36,10 @@ This repository contains codes used to carry out the analyses and create the mai
 
 * Fig3: ${V}_g$: ```Rscript plot_vg.R```
 
-* Fig4: $\hat{V}_g$: ```Rscript plot_GREML_vg.R```
+* Fig4: $\hat{V}_g^{GREML}$: ```Rscript plot_GREML_vg.R```
 
-* Fig5: $\hat{V}_{\gamma}$: ```Rscript plot_GREML_vgamma.R```
+* Fig5: $\hat{V}_g^{HE}$: ```Rscript plot_HE_vg_CI.R```
 
-* Fig6: Decomposing variance explained: ```Rscript plot_vgexplained.R```
- ```Rscript plot_vgexplainedVSvPRS.R ``` 
+* Fig7: $\hat{V}_{\gamma}$: ```Rscript plot_GREML_vgamma.R```
 
+* Fig8: Decomposing variance explained: ```Rscript plot_vgCI.R```
