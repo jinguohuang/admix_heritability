@@ -101,11 +101,12 @@ boot_beta <- function(betafreq, n = 100) {
                     f2 = betafreq$AF_AFR,
                     beta = pseudo_beta,
                     nloci = nloci)
+    vg <- vg1 + vg2 + vg3 + vg4
     
-    boot_mat[j, 1] <- vg1
-    boot_mat[j, 2] <- vg2
-    boot_mat[j, 3] <- vg3
-    boot_mat[j, 4] <- vg4
+    boot_mat[j, 1] <- vg1/vg
+    boot_mat[j, 2] <- vg2/vg
+    boot_mat[j, 3] <- vg3/vg
+    boot_mat[j, 4] <- vg4/vg
   }
   
   #print(boot_mat)
@@ -169,6 +170,6 @@ boot_terms <- do.call(rbind, vgpCI_list)
 head(boot_terms)
 
 #save output
-write.table(boot_terms, file = "vgCI.txt", 
+write.table(boot_terms, file = "vgpCI.txt", 
             sep = "\t", row.names = FALSE, quote = FALSE)
 
