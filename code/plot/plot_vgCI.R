@@ -2,14 +2,9 @@ library(tidyverse)
 library(data.table)
 
 #load in data
-vgCI <- fread("vgCI.txt", header = TRUE)
+vgCI <- fread("vgpCI.txt", header = TRUE)
 head(vgCI)
 dim(vgCI)
-
-#get total Vg by adding 4 terms
-vgCI$total <- paste0(sprintf("%.1f", (vgCI$vg1_avg + vgCI$vg2_avg + vgCI$vg3_avg + vgCI$vg4_avg) * 100), "%")
-head(vgCI)
-
 
 #melt df
 df_long <- vgCI %>%
@@ -34,9 +29,8 @@ plt_bar <- ggplot(df_long, aes(x = trait, y = avg, fill = factor(vg, levels = c(
   geom_bar(stat = "identity", position = position_dodge(width = 0.9)) + 
   geom_errorbar(aes(ymin = CI95l, ymax = CI95r), 
                 position = position_dodge(width = 0.9), width = 0.25) +
-  geom_text(aes(label = nloci), y=-0.06, colour = 'black', size = 3)+
-  geom_text(aes(label = total), y=-0.04, colour = 'black', size = 3)+
-  scale_y_continuous(limits = c(-0.05, 0.4)) +
+  geom_text(aes(label = nloci), y=-0.12, colour = 'black', size = 3)+
+  scale_y_continuous(limits = c(-0.1, 1)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   theme_classic() +
   ylab("Proportion of genetic variance") +    
@@ -60,6 +54,6 @@ plt_bar <- ggplot(df_long, aes(x = trait, y = avg, fill = factor(vg, levels = c(
 plt_bar
 
 #save plot
-ggsave("vg_terms_CI_multi.png", plot=plt_bar,
+ggsave("vgp_terms_CI_multi.png", plot=plt_bar,
        width = 15, height = 8, dpi = 300, units = "in", 
        device='png')
